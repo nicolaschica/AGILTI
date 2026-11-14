@@ -341,5 +341,4 @@ Tópico `ticket-creado` (1 partición, replicación 1), con el UUID del ticket c
 - **Esquema GraphQL:** `graphql-gateway/src/main/resources/graphql/schema.graphqls`.
 - **README por servicio:** dentro de cada carpeta.
 
-**Versión entregada:** commit «entrega final» de este repositorio, idéntico al contenido del archivo ZIP de la entrega.#   A G I L T I  
- 
+**Versión entregada:** commit «entrega final» de este repositorio, idéntico al contenido del archivo ZIP de la entrega.#

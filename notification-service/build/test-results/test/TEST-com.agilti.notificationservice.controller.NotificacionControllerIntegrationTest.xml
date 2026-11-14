@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.agilti.notificationservice.controller.NotificacionControllerIntegrationTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-11-05T16:20:29" hostname="ce92f41a4c25" time="8.928">
+  <properties/>
+  <testcase name="historialPorTicket_conNotificaciones_devuelve200ConDatos()" classname="com.agilti.notificationservice.controller.NotificacionControllerIntegrationTest" time="8.004"/>
+  <testcase name="historialPorTicket_idInvalido_devuelve400()" classname="com.agilti.notificationservice.controller.NotificacionControllerIntegrationTest" time="0.241"/>
+  <testcase name="historialPorTicket_sinNotificaciones_devuelve200ConArregloVacio()" classname="com.agilti.notificationservice.controller.NotificacionControllerIntegrationTest" time="0.014"/>
+  <testcase name="listarNotificaciones_devuelvePaginaConMetadatos()" classname="com.agilti.notificationservice.controller.NotificacionControllerIntegrationTest" time="0.663"/>
+  <system-out><![CDATA[2026-11-05T16:19:58.509Z  INFO 276 --- [notification-service] [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.agilti.notificationservice.controller.NotificacionControllerIntegrationTest]: NotificacionControllerIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-11-05T16:19:58.574Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:19:58.574Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:19:58.574Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:19:58.757Z  INFO 276 --- [notification-service] [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.agilti.notificationservice.NotificationServiceApplication for test class com.agilti.notificationservice.controller.NotificacionControllerIntegrationTest
+2026-11-05T16:19:59.249Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:19:59.250Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:19:59.250Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.4)
+
+2026-11-05T16:19:59.677Z  INFO 276 --- [notification-service] [    Test worker] .c.NotificacionControllerIntegrationTest : Starting NotificacionControllerIntegrationTest using Java 21.0.5 with PID 276 (started by root in /app)
+2026-11-05T16:19:59.677Z  INFO 276 --- [notification-service] [    Test worker] .c.NotificacionControllerIntegrationTest : The following 1 profile is active: "test"
+2026-11-05T16:20:00.265Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:00.265Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:00.265Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:01.137Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:01.138Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:01.139Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:02.157Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:02.158Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:02.158Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:03.009Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:03.010Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:03.010Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:04.025Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:04.026Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:04.026Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:05.040Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:05.040Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:05.040Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:06.001Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:06.002Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:06.002Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:06.980Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:06.981Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:06.982Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:07.894Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:07.894Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:07.894Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:08.854Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:08.854Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:08.855Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:09.855Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:09.855Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:09.855Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:10.768Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:10.769Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:10.769Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:11.611Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:11.612Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:11.612Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:12.472Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:12.473Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:12.473Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:13.518Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:13.519Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:13.519Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:14.480Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:14.480Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:14.480Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:14.790Z  INFO 276 --- [notification-service] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-11-05T16:20:15.481Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:15.482Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:15.482Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:15.721Z  INFO 276 --- [notification-service] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 930 ms. Found 1 JPA repository interface.
+2026-11-05T16:20:16.515Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:16.515Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:16.515Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:17.449Z  INFO 276 --- [notification-service] [    Test worker] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-11-05T16:20:17.475Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:17.475Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:17.475Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:17.995Z  INFO 276 --- [notification-service] [    Test worker] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-11-05T16:20:18.500Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:18.501Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:18.501Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:19.192Z  INFO 276 --- [notification-service] [    Test worker] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-11-05T16:20:19.401Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:19.402Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:19.402Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:19.447Z  INFO 276 --- [notification-service] [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Starting...
+2026-11-05T16:20:19.449Z  INFO 276 --- [notification-service] [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-2 - Added connection conn10: url=jdbc:h2:mem:notification_db user=SA
+2026-11-05T16:20:19.450Z  INFO 276 --- [notification-service] [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Start completed.
+2026-11-05T16:20:20.310Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:20.311Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:20.311Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:20.566Z  INFO 276 --- [notification-service] [    Test worker] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-11-05T16:20:20.608Z  INFO 276 --- [notification-service] [    Test worker] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-11-05T16:20:21.208Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:21.209Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:21.209Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:22.067Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:22.068Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:22.068Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:23.117Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:23.118Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:23.119Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:24.147Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:24.147Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:24.148Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:25.156Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:25.157Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:25.157Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:26.016Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:26.016Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:26.016Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:27.001Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:27.002Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:27.002Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:27.995Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:27.995Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:27.995Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:28.986Z  INFO 276 --- [notification-service] [    Test worker] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2026-11-05T16:20:28.987Z  INFO 276 --- [notification-service] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-11-05T16:20:29.006Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:29.007Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:29.007Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:29.049Z  INFO 276 --- [notification-service] [    Test worker] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoints beneath base path '/actuator'
+2026-11-05T16:20:29.319Z  INFO 276 --- [notification-service] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 330 ms
+2026-11-05T16:20:29.624Z  INFO 276 --- [notification-service] [    Test worker] o.a.k.clients.consumer.ConsumerConfig    : ConsumerConfig values: 
+	allow.auto.create.topics = true
+	auto.commit.interval.ms = 5000
+	auto.include.jmx.reporter = true
+	auto.offset.reset = earliest
+	bootstrap.servers = [localhost:9092]
+	check.crcs = true
+	client.dns.lookup = use_all_dns_ips
+	client.id = consumer-notification-service-group-2
+	client.rack = 
+	connections.max.idle.ms = 540000
+	default.api.timeout.ms = 60000
+	enable.auto.commit = false
+	enable.metrics.push = true
+	exclude.internal.topics = true
+	fetch.max.bytes = 52428800
+	fetch.max.wait.ms = 500
+	fetch.min.bytes = 1
+	group.id = notification-service-group
+	group.instance.id = null
+	group.protocol = classic
+	group.remote.assignor = null
+	heartbeat.interval.ms = 3000
+	interceptor.classes = []
+	internal.leave.group.on.close = true
+	internal.throw.on.fetch.stable.offset.unsupported = false
+	isolation.level = read_uncommitted
+	key.deserializer = class org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+	max.partition.fetch.bytes = 1048576
+	max.poll.interval.ms = 300000
+	max.poll.records = 500
+	metadata.max.age.ms = 300000
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	partition.assignment.strategy = [class org.apache.kafka.clients.consumer.RangeAssignor, class org.apache.kafka.clients.consumer.CooperativeStickyAssignor]
+	receive.buffer.bytes = 65536
+	reconnect.backoff.max.ms = 1000
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 30000
+	retry.backoff.max.ms = 1000
+	retry.backoff.ms = 100
+	sasl.client.callback.handler.class = null
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.connect.timeout.ms = null
+	sasl.login.read.timeout.ms = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.login.retry.backoff.max.ms = 10000
+	sasl.login.retry.backoff.ms = 100
+	sasl.mechanism = GSSAPI
+	sasl.oauthbearer.clock.skew.seconds = 30
+	sasl.oauthbearer.expected.audience = null
+	sasl.oauthbearer.expected.issuer = null
+	sasl.oauthbearer.jwks.endpoint.refresh.ms = 3600000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.max.ms = 10000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.ms = 100
+	sasl.oauthbearer.jwks.endpoint.url = null
+	sasl.oauthbearer.scope.claim.name = scope
+	sasl.oauthbearer.sub.claim.name = sub
+	sasl.oauthbearer.token.endpoint.url = null
+	security.protocol = PLAINTEXT
+	security.providers = null
+	send.buffer.bytes = 131072
+	session.timeout.ms = 45000
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+	value.deserializer = class org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+
+2026-11-05T16:20:29.626Z  INFO 276 --- [notification-service] [    Test worker] o.a.k.c.t.i.KafkaMetricsCollector        : initializing Kafka metrics collector
+2026-11-05T16:20:29.672Z  INFO 276 --- [notification-service] [    Test worker] o.a.kafka.common.utils.AppInfoParser     : Kafka version: 3.7.1
+2026-11-05T16:20:29.673Z  INFO 276 --- [notification-service] [    Test worker] o.a.kafka.common.utils.AppInfoParser     : Kafka commitId: e2494e6ffb89f828
+2026-11-05T16:20:29.673Z  INFO 276 --- [notification-service] [    Test worker] o.a.kafka.common.utils.AppInfoParser     : Kafka startTimeMs: 1793895629671
+2026-11-05T16:20:29.675Z  INFO 276 --- [notification-service] [    Test worker] o.a.k.c.c.internals.LegacyKafkaConsumer  : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Subscribed to topic(s): ticket-creado
+2026-11-05T16:20:29.687Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:29.688Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:29.688Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:29.696Z  INFO 276 --- [notification-service] [    Test worker] .c.NotificacionControllerIntegrationTest : Started NotificacionControllerIntegrationTest in 30.911 seconds (process running for 229.474)
+2026-11-05T16:20:29.804Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:29.805Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:29.805Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:29.957Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:29.958Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:29.958Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:30.052Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:30.052Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:30.052Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:30.172Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:30.173Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:30.173Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:30.637Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:30.637Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:30.638Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:30.908Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:30.908Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:30.909Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:31.493Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:31.494Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:31.494Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:31.857Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:31.858Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:31.858Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:32.400Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:32.400Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:32.400Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:32.864Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:32.864Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:32.865Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:33.449Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:33.450Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:33.450Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:33.914Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:33.914Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:33.915Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:34.459Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:34.459Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:34.459Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:34.822Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:34.823Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:34.823Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:35.490Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:35.490Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:35.491Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:35.855Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:35.855Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:35.855Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:36.539Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:36.539Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:36.539Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:36.815Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:36.816Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:36.816Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:37.541Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:37.541Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:37.541Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:37.862Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:37.863Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:37.863Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-1, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-11-05T16:20:38.588Z  INFO 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Node -1 disconnected.
+2026-11-05T16:20:38.588Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-11-05T16:20:38.588Z  WARN 276 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-service-group-2, groupId=notification-service-group] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

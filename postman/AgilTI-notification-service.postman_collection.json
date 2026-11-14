@@ -1,0 +1,286 @@
+{
+  "info": {
+    "name": "AgilTI - notification-service",
+    "description": "Coleccion para probar notification-service sin datos precargados. La peticion 1 crea un ticket real en ticket-service, guarda su id en {{ticketId}} y espera (reintentando) a que el consumidor Kafka del topico ticket-creado genere la notificacion; las demas peticiones usan ese ticketId. Requiere ticket-service (8080), Kafka y notification-service (8081) levantados, por ejemplo con docker compose up --build. Ejecutala en orden (boton Run).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8081",
+      "type": "string"
+    },
+    {
+      "key": "ticketsUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "ticketId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "ticketTitulo",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "ticketIdInexistente",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Crear ticket en ticket-service y esperar su notificacion (201)",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Titulo unico por ejecucion: permite reconocer la notificacion de este ticket",
+              "pm.collectionVariables.set('ticketTitulo', 'Postman notificacion ' + Date.now());"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status es 201 (ticket creado en ticket-service)', function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "const ticket = pm.response.json();",
+              "pm.collectionVariables.set('ticketId', ticket.id);",
+              "",
+              "// El consumidor Kafka crea la notificacion de forma asincrona: se consulta",
+              "// el historial del ticket hasta que aparezca (max. 15 intentos, 1 s entre cada uno).",
+              "const MAX_INTENTOS = 15;",
+              "const ESPERA_MS = 1000;",
+              "const historialUrl = pm.variables.get('baseUrl') + '/api/notificaciones/ticket/' + ticket.id;",
+              "function esperarNotificacion(intento) {",
+              "    pm.sendRequest(historialUrl, function (err, res) {",
+              "        const lista = !err && res.code === 200 ? res.json() : [];",
+              "        if (lista.length > 0 || intento >= MAX_INTENTOS) {",
+              "            pm.test('El consumidor Kafka creo la notificacion (intento ' + intento + ' de ' + MAX_INTENTOS + ')', function () {",
+              "                pm.expect(lista.length).to.be.at.least(1);",
+              "            });",
+              "            return;",
+              "        }",
+              "        setTimeout(function () { esperarNotificacion(intento + 1); }, ESPERA_MS);",
+              "    });",
+              "}",
+              "esperarNotificacion(1);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{ticketsUrl}}/api/tickets",
+          "host": [
+            "{{ticketsUrl}}"
+          ],
+          "path": [
+            "api",
+            "tickets"
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"titulo\": \"{{ticketTitulo}}\",\n  \"descripcion\": \"Ticket creado por la coleccion de notification-service\",\n  \"prioridad\": \"MEDIA\"\n}"
+        }
+      }
+    },
+    {
+      "name": "2. Historial del ticket creado (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status es 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "const lista = pm.response.json();",
+              "pm.test('Devuelve al menos una notificacion, todas de este ticket', function () {",
+              "    pm.expect(lista).to.be.an('array').that.is.not.empty;",
+              "    lista.forEach(function (n) {",
+              "        pm.expect(n.ticketId).to.eql(pm.collectionVariables.get('ticketId'));",
+              "    });",
+              "});",
+              "pm.test('La notificacion menciona el titulo del ticket', function () {",
+              "    pm.expect(lista[0].mensaje).to.include(pm.collectionVariables.get('ticketTitulo'));",
+              "});",
+              "pm.test('Cada item tiene los 4 campos del contrato', function () {",
+              "    lista.forEach(function (n) {",
+              "        pm.expect(n).to.have.all.keys('id', 'ticketId', 'mensaje', 'fechaEnvio');",
+              "    });",
+              "});",
+              "pm.test('Vienen ordenadas de mas reciente a mas antigua', function () {",
+              "    for (let i = 1; i < lista.length; i++) {",
+              "        const anterior = new Date(lista[i - 1].fechaEnvio).getTime();",
+              "        const actual = new Date(lista[i].fechaEnvio).getTime();",
+              "        pm.expect(anterior).to.be.at.least(actual);",
+              "    }",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/notificaciones/ticket/{{ticketId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "notificaciones",
+            "ticket",
+            "{{ticketId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "3. Listar notificaciones paginadas (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status es 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "const body = pm.response.json();",
+              "const lista = body.content;",
+              "pm.test('La respuesta tiene estructura de paginacion', function () {",
+              "    pm.expect(body).to.include.all.keys('content', 'page', 'size', 'totalElements', 'totalPages', 'nextPage', 'previousPage');",
+              "    pm.expect(lista).to.be.an('array');",
+              "    pm.expect(body.page).to.eql(0);",
+              "    pm.expect(body.size).to.eql(20);",
+              "    pm.expect(body.totalElements).to.be.at.least(1);",
+              "});",
+              "pm.test('Incluye la notificacion del ticket creado', function () {",
+              "    const ticketId = pm.collectionVariables.get('ticketId');",
+              "    pm.expect(lista.some(function (n) { return n.ticketId === ticketId; })).to.eql(true);",
+              "});",
+              "pm.test('Vienen ordenadas de mas reciente a mas antigua', function () {",
+              "    for (let i = 1; i < lista.length; i++) {",
+              "        const anterior = new Date(lista[i - 1].fechaEnvio).getTime();",
+              "        const actual = new Date(lista[i].fechaEnvio).getTime();",
+              "        pm.expect(anterior).to.be.at.least(actual);",
+              "    }",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/notificaciones?page=0&size=20",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "notificaciones"
+          ]
+        }
+      }
+    },
+    {
+      "name": "4. Historial de un ticket inexistente (200, arreglo vacio)",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// UUID aleatorio en cada ejecucion: ningun ticket real lo tiene",
+              "pm.collectionVariables.set('ticketIdInexistente', pm.variables.replaceIn('{{$guid}}'));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status es 200 (no 404, segun el contrato)', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('Devuelve un arreglo vacio', function () {",
+              "    pm.expect(pm.response.json()).to.be.an('array').that.is.empty;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/notificaciones/ticket/{{ticketIdInexistente}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "notificaciones",
+            "ticket",
+            "{{ticketIdInexistente}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "5. ticketId con formato invalido (400)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status es 400', function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "pm.test('Respuesta trae mensaje de error', function () {",
+              "    pm.expect(pm.response.json().mensaje).to.be.a('string');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/notificaciones/ticket/no-es-un-uuid",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "notificaciones",
+            "ticket",
+            "no-es-un-uuid"
+          ]
+        }
+      }
+    }
+  ]
+}

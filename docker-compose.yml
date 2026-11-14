@@ -1,0 +1,168 @@
+# AgilTI - Entrega Q10 "API REST y persistencia funcional"
+# Un solo comando levanta TODO: docker compose up --build
+#
+# - postgres: una instancia, dos bases de datos independientes
+#   (ticket_db y notification_db), creadas por docker/init-db.sql
+# - zookeeper + kafka: broker de mensajeria para el evento ticket-creado
+# - kafka-ui: panel visual para ver topicos y mensajes (puerto 8090)
+# - ticket-service: publica el evento ticket-creado a Kafka al crear un ticket
+# - notification-service: consume ese evento y guarda la notificacion
+# - graphql-gateway: UNICA puerta de entrada del frontend (puerto 8082,
+#   /graphql y /graphiql-local). Queries y mutations de tickets y queries de
+#   notificaciones; delega por REST en ticket-service y notification-service
+# - agilti-frontend: interfaz web React (puerto 3000), solo habla GraphQL
+#   con graphql-gateway (no conoce los puertos 8080 ni 8081)
+
+services:
+
+  # ── Base de datos ──────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:15
+    container_name: agilti-postgres
+    environment:
+      POSTGRES_USER: agilti
+      POSTGRES_PASSWORD: agilti_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - agilti_pg_data:/var/lib/postgresql/data
+      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agilti"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - agilti-net
+
+  # ── Kafka (mensajeria) ─────────────────────────────────────────────────────
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.0
+    container_name: agilti-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - agilti-net
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: agilti-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      # Puerto 29092: interno (dentro de Docker, lo usan los servicios)
+      # Puerto 9092:  externo (desde tu maquina Windows, si quieres conectarte)
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    networks:
+      - agilti-net
+
+  # ── Kafka UI ───────────────────────────────────────────────────────────────
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: omn-kafka-ui-local
+    ports:
+      - "8090:8080"
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:29092
+      - DYNAMIC_CONFIG_ENABLED=true
+      - KAFKA_CLUSTERS_0_READONLY=false
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - agilti-net
+
+  # ── Microservicios ─────────────────────────────────────────────────────────
+  ticket-service:
+    build: ./ticket-service
+    container_name: agilti-ticket-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ticket_db
+      SPRING_DATASOURCE_USERNAME: agilti
+      SPRING_DATASOURCE_PASSWORD: agilti_pass
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    restart: on-failure
+    networks:
+      - agilti-net
+
+  notification-service:
+    build: ./notification-service
+    container_name: agilti-notification-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/notification_db
+      SPRING_DATASOURCE_USERNAME: agilti
+      SPRING_DATASOURCE_PASSWORD: agilti_pass
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    restart: on-failure
+    networks:
+      - agilti-net
+
+  # Unica puerta de entrada del frontend. No usa base de datos ni Kafka:
+  # delega por REST en ticket-service y notification-service (por su nombre
+  # de servicio dentro de agilti-net).
+  graphql-gateway:
+    build: ./graphql-gateway
+    container_name: agilti-graphql-gateway
+    depends_on:
+      - ticket-service
+      - notification-service
+    ports:
+      - "8082:8082"
+    environment:
+      TICKET_SERVICE_URL: http://ticket-service:8080
+      NOTIFICATION_SERVICE_URL: http://notification-service:8081
+    restart: on-failure
+    networks:
+      - agilti-net
+
+  # ── Frontend ───────────────────────────────────────────────────────────────
+  # React + Vite servido por nginx. La URL del gateway se "hornea" en el
+  # build: la usa el NAVEGADOR, por eso apunta a localhost y no al nombre
+  # de servicio de Docker. Es la unica URL de backend que conoce el front.
+  agilti-frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_GATEWAY_URL: http://localhost:8082
+    container_name: agilti-frontend
+    depends_on:
+      - graphql-gateway
+    ports:
+      - "3000:80"
+    networks:
+      - agilti-net
+
+networks:
+  agilti-net:
+    driver: bridge
+
+volumes:
+  agilti_pg_data:

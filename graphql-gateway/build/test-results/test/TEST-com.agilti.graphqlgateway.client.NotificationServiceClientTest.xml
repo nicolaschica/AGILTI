@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.agilti.graphqlgateway.client.NotificationServiceClientTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-11-05T16:09:42" hostname="a33801f769b4" time="3.785">
+  <properties/>
+  <testcase name="errorHttpSeEnvuelveIndicandoElServicio()" classname="com.agilti.graphqlgateway.client.NotificationServiceClientTest" time="1.777"/>
+  <testcase name="listarNotificacionesEnviaPageYSizeYMapeaLaPagina()" classname="com.agilti.graphqlgateway.client.NotificationServiceClientTest" time="1.981"/>
+  <testcase name="historialPorTicketLlamaAlEndpointDelTicket()" classname="com.agilti.graphqlgateway.client.NotificationServiceClientTest" time="0.025"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

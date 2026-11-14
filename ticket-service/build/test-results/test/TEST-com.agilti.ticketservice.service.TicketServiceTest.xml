@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.agilti.ticketservice.service.TicketServiceTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-11-05T16:16:08" hostname="34f6e2898a13" time="3.464">
+  <properties/>
+  <testcase name="actualizarEstado_rechazaTransicionInvalida()" classname="com.agilti.ticketservice.service.TicketServiceTest" time="3.008"/>
+  <testcase name="actualizarEstado_permiteTransicionValida()" classname="com.agilti.ticketservice.service.TicketServiceTest" time="0.092"/>
+  <testcase name="crearTicket_publicaEventoTicketCreadoUnaVez()" classname="com.agilti.ticketservice.service.TicketServiceTest" time="0.295"/>
+  <testcase name="crearTicket_asignaTecnicosEnRoundRobin()" classname="com.agilti.ticketservice.service.TicketServiceTest" time="0.052"/>
+  <testcase name="crearTicket_elTicketQuedaEnEstadoAbierto()" classname="com.agilti.ticketservice.service.TicketServiceTest" time="0.002"/>
+  <testcase name="obtenerTicket_lanzaExcepcionSiNoExiste()" classname="com.agilti.ticketservice.service.TicketServiceTest" time="0.004"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

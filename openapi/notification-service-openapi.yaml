@@ -1,0 +1,186 @@
+openapi: 3.0.3
+info:
+  title: AgilTI - Notification Service API
+  description: >
+    API REST de notification-service. Las notificaciones las crea
+    exclusivamente el consumidor Kafka interno (TicketCreadoListener) al
+    recibir un evento "ticket-creado" publicado por ticket-service; este
+    servicio NO expone ningun endpoint de escritura (POST/PUT/DELETE) y
+    nunca crea una notificacion a partir de una peticion REST. Por eso
+    este contrato solo define los dos endpoints de lectura: listado
+    general paginado e historial por ticket.
+
+    v1.2.0: se aclara explicitamente que la creacion de notificaciones
+    ocurre solo via el consumidor Kafka (nunca via REST), se documentan
+    los campos obligatorios de los schemas Notificacion y NotificacionPage,
+    y se agregan ejemplos de respuesta 200/400.
+  version: "1.2.0"
+
+servers:
+  - url: http://localhost:8081
+    description: Entorno local (Docker Compose)
+
+tags:
+  - name: Notificaciones
+    description: Historial de notificaciones simuladas por ticket
+
+paths:
+  /api/notificaciones:
+    get:
+      tags: [Notificaciones]
+      summary: Listar todas las notificaciones, con paginacion
+      description: >
+        Devuelve todas las notificaciones generadas a partir del evento
+        Kafka "ticket-creado", ordenadas de la mas reciente a la mas
+        antigua. Agregado para la pantalla de notificaciones del frontend, que
+        lo consume a traves del graphql-gateway (query notificaciones).
+      operationId: listarNotificaciones
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: Numero de pagina, empieza en 0
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: size
+          in: query
+          required: false
+          description: Cantidad de resultados por pagina
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+      responses:
+        '200':
+          description: Pagina de notificaciones (puede venir vacia)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificacionPage'
+              example:
+                content:
+                  - id: "9c858f3a-0e1a-4b2b-8e8e-2f6a7c9d4b11"
+                    ticketId: "550e8400-e29b-41d4-a716-446655440000"
+                    mensaje: "Nuevo ticket \"No enciende el computador\" (prioridad ALTA) asignado a Carlos Perez."
+                    fechaEnvio: "2026-03-10T19:32:01.456789Z"
+                page: 0
+                size: 20
+                totalElements: 1
+                totalPages: 1
+                nextPage: false
+                previousPage: false
+
+  /api/notificaciones/ticket/{ticketId}:
+    get:
+      tags: [Notificaciones]
+      summary: Consultar el historial de notificaciones de un ticket
+      description: >
+        Devuelve todas las notificaciones simuladas generadas para un
+        ticket especifico (RF-06), ordenadas de la mas reciente a la mas
+        antigua.
+      operationId: historialPorTicket
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          description: Id del ticket en ticket_db (referencia logica, no FK real)
+          schema:
+            type: string
+            format: uuid
+            example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: >
+            Listado de notificaciones del ticket (puede venir vacio; un
+            ticketId que no tiene ninguna notificacion, o que no existe en
+            ticket-service, responde 200 con un arreglo vacio, nunca 404).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Notificacion'
+              example:
+                - id: "9c858f3a-0e1a-4b2b-8e8e-2f6a7c9d4b11"
+                  ticketId: "550e8400-e29b-41d4-a716-446655440000"
+                  mensaje: "Nuevo ticket \"No enciende el computador\" (prioridad ALTA) asignado a Carlos Perez."
+                  fechaEnvio: "2026-03-10T19:32:01.456789Z"
+        '400':
+          description: >
+            ticketId con formato invalido (no es un UUID). Agregado en la
+            entrega Q10 como manejo centralizado de errores general.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                mensaje: "Valor invalido para 'ticketId': abc. Se esperaba un UUID valido."
+
+components:
+  schemas:
+    Notificacion:
+      type: object
+      description: >
+        Generada por TicketCreadoListener al consumir el evento Kafka
+        "ticket-creado"; nunca se crea via REST.
+      required: [id, ticketId, mensaje, fechaEnvio]
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "9c858f3a-0e1a-4b2b-8e8e-2f6a7c9d4b11"
+        ticketId:
+          type: string
+          format: uuid
+          description: Referencia logica al ticket (sin FK real; ticket_db y notification_db son bases independientes)
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        mensaje:
+          type: string
+          description: >
+            Texto fijo generado por el consumidor:
+            Nuevo ticket "{titulo}" (prioridad {prioridad}) asignado a
+            {tecnicoAsignado, o "ningun tecnico" si vino null}.
+          example: "Nuevo ticket \"No enciende el computador\" (prioridad ALTA) asignado a Carlos Perez."
+        fechaEnvio:
+          type: string
+          format: date-time
+          description: ISO-8601 en UTC, instante en que se guardo la notificacion
+          example: "2026-03-10T19:32:01.456789Z"
+
+    NotificacionPage:
+      type: object
+      description: Mismo envoltorio de paginacion que PageResponseTicket de ticket-service.
+      required: [content, page, size, totalElements, totalPages, nextPage, previousPage]
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notificacion'
+        page:
+          type: integer
+          description: Numero de pagina actual (empieza en 0)
+        size:
+          type: integer
+          description: Cantidad de resultados por pagina solicitada
+        totalElements:
+          type: integer
+          format: int64
+          description: Total de notificaciones (todas las paginas)
+        totalPages:
+          type: integer
+          description: Cantidad total de paginas disponibles
+        nextPage:
+          type: boolean
+          description: true si existe una pagina siguiente (no es la ultima)
+        previousPage:
+          type: boolean
+          description: true si existe una pagina anterior (no es la primera)
+
+    ErrorResponse:
+      type: object
+      properties:
+        mensaje:
+          type: string
+          example: "Valor invalido para 'ticketId': abc. Se esperaba un UUID valido."

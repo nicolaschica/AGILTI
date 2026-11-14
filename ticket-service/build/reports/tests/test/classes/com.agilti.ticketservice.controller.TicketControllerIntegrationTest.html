@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta http-equiv="x-ua-compatible" content="IE=edge"/>
+<title>Test results - TicketControllerIntegrationTest</title>
+<link href="../css/base-style.css" rel="stylesheet" type="text/css"/>
+<link href="../css/style.css" rel="stylesheet" type="text/css"/>
+<script src="../js/report.js" type="text/javascript"></script>
+</head>
+<body>
+<div id="content">
+<h1>TicketControllerIntegrationTest</h1>
+<div class="breadcrumbs">
+<a href="../index.html">all</a> &gt; 
+<a href="../packages/com.agilti.ticketservice.controller.html">com.agilti.ticketservice.controller</a> &gt; TicketControllerIntegrationTest</div>
+<div id="summary">
+<table>
+<tr>
+<td>
+<div class="summaryGroup">
+<table>
+<tr>
+<td>
+<div class="infoBox" id="tests">
+<div class="counter">7</div>
+<p>tests</p>
+</div>
+</td>
+<td>
+<div class="infoBox" id="failures">
+<div class="counter">0</div>
+<p>failures</p>
+</div>
+</td>
+<td>
+<div class="infoBox" id="ignored">
+<div class="counter">0</div>
+<p>ignored</p>
+</div>
+</td>
+<td>
+<div class="infoBox" id="duration">
+<div class="counter">23.316s</div>
+<p>duration</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</td>
+<td>
+<div class="infoBox success" id="successRate">
+<div class="percent">100%</div>
+<p>successful</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div id="tabs">
+<ul class="tabLinks">
+<li>
+<a href="#tab0">Tests</a>
+</li>
+<li>
+<a href="#tab1">Standard output</a>
+</li>
+</ul>
+<div id="tab0" class="tab">
+<h2>Tests</h2>
+<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>Duration</th>
+<th>Result</th>
+</tr>
+</thead>
+<tr>
+<td class="success">crearTicket_devuelve201ConTecnicoAsignado()</td>
+<td class="success">20.033s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">crearTicket_jsonMalFormado_devuelve400ConMensaje()</td>
+<td class="success">0.011s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">crearTicket_prioridadInexistente_devuelve400ConMensaje()</td>
+<td class="success">0.051s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">crearTicket_sinTitulo_devuelve400()</td>
+<td class="success">0.469s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">flujoCompleto_crearYCambiarEstado()</td>
+<td class="success">0.600s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">listarTickets_devuelve200ConEstructuraPaginada()</td>
+<td class="success">1.971s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">obtenerTicket_inexistente_devuelve404()</td>
+<td class="success">0.181s</td>
+<td class="success">passed</td>
+</tr>
+</table>
+</div>
+<div id="tab1" class="tab">
+<h2>Standard output</h2>
+<span class="code">
+<pre>2026-11-05T16:15:01.907Z  INFO 278 --- [ticket-service] [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.agilti.ticketservice.controller.TicketControllerIntegrationTest]: TicketControllerIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-11-05T16:15:02.649Z  INFO 278 --- [ticket-service] [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.agilti.ticketservice.TicketServiceApplication for test class com.agilti.ticketservice.controller.TicketControllerIntegrationTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.4)
+
+2026-11-05T16:15:03.875Z  INFO 278 --- [ticket-service] [    Test worker] c.a.t.c.TicketControllerIntegrationTest  : Starting TicketControllerIntegrationTest using Java 21.0.5 with PID 278 (started by root in /app)
+2026-11-05T16:15:03.876Z  INFO 278 --- [ticket-service] [    Test worker] c.a.t.c.TicketControllerIntegrationTest  : The following 1 profile is active: &quot;test&quot;
+2026-11-05T16:15:21.804Z  INFO 278 --- [ticket-service] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-11-05T16:15:22.659Z  INFO 278 --- [ticket-service] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 855 ms. Found 1 JPA repository interface.
+2026-11-05T16:15:27.136Z  INFO 278 --- [ticket-service] [    Test worker] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-11-05T16:15:27.358Z  INFO 278 --- [ticket-service] [    Test worker] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-11-05T16:15:28.192Z  INFO 278 --- [ticket-service] [    Test worker] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-11-05T16:15:28.363Z  INFO 278 --- [ticket-service] [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Starting...
+2026-11-05T16:15:28.366Z  INFO 278 --- [ticket-service] [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-2 - Added connection conn10: url=jdbc:h2:mem:ticket_db user=SA
+2026-11-05T16:15:28.368Z  INFO 278 --- [ticket-service] [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Start completed.
+2026-11-05T16:15:30.548Z  INFO 278 --- [ticket-service] [    Test worker] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-11-05T16:15:30.626Z  INFO 278 --- [ticket-service] [    Test worker] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-11-05T16:15:44.219Z  INFO 278 --- [ticket-service] [    Test worker] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2026-11-05T16:15:44.220Z  INFO 278 --- [ticket-service] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-11-05T16:15:44.291Z  INFO 278 --- [ticket-service] [    Test worker] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoints beneath base path '/actuator'
+2026-11-05T16:15:44.506Z  INFO 278 --- [ticket-service] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 275 ms
+2026-11-05T16:15:44.811Z  INFO 278 --- [ticket-service] [    Test worker] c.a.t.c.TicketControllerIntegrationTest  : Started TicketControllerIntegrationTest in 42.016 seconds (process running for 237.754)
+</pre>
+</span>
+</div>
+</div>
+<div id="footer">
+<p>
+<div>
+<label class="hidden" id="label-for-line-wrapping-toggle" for="line-wrapping-toggle">Wrap lines
+<input id="line-wrapping-toggle" type="checkbox" autocomplete="off"/>
+</label>
+</div>Generated by 
+<a href="http://www.gradle.org">Gradle 8.10.2</a> at Nov 5, 2026, 4:16:12 PM</p>
+</div>
+</div>
+</body>
+</html>

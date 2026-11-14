@@ -1,0 +1,43 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.3.4'
+    id 'io.spring.dependency-management' version '1.1.6'
+}
+
+group = 'com.agilti'
+version = '1.0.0'
+description = 'graphql-gateway - AgilTI. Unica puerta de entrada GraphQL del frontend: delega por REST en ticket-service y notification-service.'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-graphql'
+    // starter-web aporta el servidor HTTP (Tomcat) y RestClient, el cliente
+    // HTTP con el que el gateway llama a ticket-service y notification-service.
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // GraphiQL servido localmente en /graphiql-local, sin CDN. graphiql 3.x
+    // es la ultima linea con build UMD (graphiql.min.js/css autocontenidos,
+    // fuentes embebidas); solo necesita React y ReactDOM 18 como globales.
+    // transitive = false: el UMD ya trae todo, el resto del arbol npm sobra.
+    runtimeOnly('org.webjars.npm:graphiql:3.9.0') { transitive = false }
+    runtimeOnly('org.webjars.npm:react:18.3.1') { transitive = false }
+    runtimeOnly('org.webjars.npm:react-dom:18.3.1') { transitive = false }
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.graphql:spring-graphql-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AgilTI - GraphiQL</title>
+  <!-- Todo se sirve desde este mismo servicio (webjars), sin CDN -->
+  <link rel="stylesheet" href="/webjars/graphiql/3.9.0/graphiql.min.css">
+  <style>
+    body { margin: 0; height: 100vh; overflow: hidden; }
+    #graphiql { height: 100vh; }
+  </style>
+</head>
+<body>
+  <div id="graphiql">Cargando GraphiQL...</div>
+
+  <script src="/webjars/react/18.3.1/umd/react.production.min.js"></script>
+  <script src="/webjars/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+  <script src="/webjars/graphiql/3.9.0/graphiql.min.js"></script>
+  <script>
+    const fetcher = GraphiQL.createFetcher({ url: '/graphql' });
+    const defaultQuery = `# graphql-gateway de AgilTI: queries y mutations de tickets + notificaciones
+{
+  tickets(page: 0, size: 5) {
+    content { id titulo prioridad estado tecnicoAsignado fechaCreacion }
+    page size totalElements totalPages nextPage previousPage
+  }
+}
+`;
+    ReactDOM.createRoot(document.getElementById('graphiql')).render(
+      React.createElement(GraphiQL, { fetcher, defaultQuery })
+    );
+  </script>
+</body>
+</html>

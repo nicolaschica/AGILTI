@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.agilti.ticketservice.controller.TicketControllerIntegrationTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-11-05T16:15:45" hostname="34f6e2898a13" time="23.333">
+  <properties/>
+  <testcase name="crearTicket_devuelve201ConTecnicoAsignado()" classname="com.agilti.ticketservice.controller.TicketControllerIntegrationTest" time="20.033"/>
+  <testcase name="listarTickets_devuelve200ConEstructuraPaginada()" classname="com.agilti.ticketservice.controller.TicketControllerIntegrationTest" time="1.971"/>
+  <testcase name="crearTicket_sinTitulo_devuelve400()" classname="com.agilti.ticketservice.controller.TicketControllerIntegrationTest" time="0.469"/>
+  <testcase name="obtenerTicket_inexistente_devuelve404()" classname="com.agilti.ticketservice.controller.TicketControllerIntegrationTest" time="0.181"/>
+  <testcase name="flujoCompleto_crearYCambiarEstado()" classname="com.agilti.ticketservice.controller.TicketControllerIntegrationTest" time="0.6"/>
+  <testcase name="crearTicket_prioridadInexistente_devuelve400ConMensaje()" classname="com.agilti.ticketservice.controller.TicketControllerIntegrationTest" time="0.051"/>
+  <testcase name="crearTicket_jsonMalFormado_devuelve400ConMensaje()" classname="com.agilti.ticketservice.controller.TicketControllerIntegrationTest" time="0.011"/>
+  <system-out><![CDATA[2026-11-05T16:15:01.907Z  INFO 278 --- [ticket-service] [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.agilti.ticketservice.controller.TicketControllerIntegrationTest]: TicketControllerIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-11-05T16:15:02.649Z  INFO 278 --- [ticket-service] [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.agilti.ticketservice.TicketServiceApplication for test class com.agilti.ticketservice.controller.TicketControllerIntegrationTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.4)
+
+2026-11-05T16:15:03.875Z  INFO 278 --- [ticket-service] [    Test worker] c.a.t.c.TicketControllerIntegrationTest  : Starting TicketControllerIntegrationTest using Java 21.0.5 with PID 278 (started by root in /app)
+2026-11-05T16:15:03.876Z  INFO 278 --- [ticket-service] [    Test worker] c.a.t.c.TicketControllerIntegrationTest  : The following 1 profile is active: "test"
+2026-11-05T16:15:21.804Z  INFO 278 --- [ticket-service] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-11-05T16:15:22.659Z  INFO 278 --- [ticket-service] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 855 ms. Found 1 JPA repository interface.
+2026-11-05T16:15:27.136Z  INFO 278 --- [ticket-service] [    Test worker] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-11-05T16:15:27.358Z  INFO 278 --- [ticket-service] [    Test worker] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-11-05T16:15:28.192Z  INFO 278 --- [ticket-service] [    Test worker] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-11-05T16:15:28.363Z  INFO 278 --- [ticket-service] [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Starting...
+2026-11-05T16:15:28.366Z  INFO 278 --- [ticket-service] [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-2 - Added connection conn10: url=jdbc:h2:mem:ticket_db user=SA
+2026-11-05T16:15:28.368Z  INFO 278 --- [ticket-service] [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Start completed.
+2026-11-05T16:15:30.548Z  INFO 278 --- [ticket-service] [    Test worker] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-11-05T16:15:30.626Z  INFO 278 --- [ticket-service] [    Test worker] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-11-05T16:15:44.219Z  INFO 278 --- [ticket-service] [    Test worker] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2026-11-05T16:15:44.220Z  INFO 278 --- [ticket-service] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-11-05T16:15:44.291Z  INFO 278 --- [ticket-service] [    Test worker] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoints beneath base path '/actuator'
+2026-11-05T16:15:44.506Z  INFO 278 --- [ticket-service] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 275 ms
+2026-11-05T16:15:44.811Z  INFO 278 --- [ticket-service] [    Test worker] c.a.t.c.TicketControllerIntegrationTest  : Started TicketControllerIntegrationTest in 42.016 seconds (process running for 237.754)
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

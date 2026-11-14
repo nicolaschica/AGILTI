@@ -1,0 +1,293 @@
+openapi: 3.0.3
+info:
+  title: AgilTI - GraphQL Gateway API
+  description: >
+    graphql-gateway es la UNICA puerta de entrada del frontend: el
+    navegador solo habla con este servicio (requisito del docente "El
+    Gateway debe hacer todas las peticiones, el front solo debe conectarse
+    con el Gateway"). El gateway no tiene base de datos ni Kafka ni logica
+    de negocio propia: cada campo se resuelve delegando por REST en
+    ticket-service (puerto 8080) o notification-service (puerto 8081).
+
+    Este documento OpenAPI describe UNICAMENTE el transporte HTTP: un
+    unico endpoint, POST /graphql, que recibe y devuelve JSON segun la
+    especificacion GraphQL sobre HTTP. El contrato real -las queries,
+    mutations, tipos y campos disponibles- es el esquema GraphQL en
+    graphql-gateway/src/main/resources/graphql/schema.graphqls, no este
+    archivo. Este documento existe solo para que herramientas basadas en
+    OpenAPI (Postman, mocks, etc.) sepan como alcanzar el endpoint; los
+    ejemplos de abajo reflejan operaciones reales del esquema.
+
+    Operaciones reales expuestas por el esquema:
+    - Queries: tickets(estado, prioridad, page, size), ticket(id),
+      notificaciones(page, size), notificacionesPorTicket(ticketId).
+    - Mutations: crearTicket(titulo, descripcion, prioridad),
+      actualizarEstadoTicket(id, estado).
+    - No se define ningun tipo Subscription.
+
+    GraphQL SIEMPRE responde HTTP 200, incluso cuando hay errores: una
+    respuesta exitosa trae "data" (y "errors" ausente o null); una
+    respuesta con errores trae "errors" (y "data" puede venir presente con
+    los campos que si se resolvieron, ausente, o null si fallo la
+    operacion raiz). El codigo de error va en errors[].extensions.code,
+    con cuatro valores posibles: NOT_FOUND (el servicio delegado respondio
+    404), BAD_REQUEST (400: datos invalidos, transicion de estado invalida,
+    id/ticketId no es UUID, page/size invalidos), SERVICE_UNAVAILABLE
+    (ticket-service o notification-service no respondieron dentro del
+    timeout configurado, por defecto 4s) e INTERNAL_ERROR (el servicio
+    delegado respondio un error HTTP inesperado, 5xx, o cualquier otra
+    falla no clasificada). Nunca se expone un stack trace.
+
+    Si falta un argumento obligatorio o se envia un valor fuera de un enum
+    GraphQL (Estado, Prioridad), la libreria GraphQL rechaza la operacion
+    antes de llamar a ningun servicio, con un error de validacion estandar
+    (sin extensions.code de los cuatro anteriores).
+  version: "1.0.0"
+
+servers:
+  - url: http://localhost:8082
+    description: Entorno local (Docker Compose)
+
+tags:
+  - name: GraphQL
+    description: Unico endpoint de transporte; las operaciones reales están en el esquema GraphQL
+
+paths:
+  /graphql:
+    post:
+      tags: [GraphQL]
+      summary: Ejecutar una query o mutation GraphQL
+      description: >
+        Unico endpoint HTTP del gateway. Acepta cualquier query o mutation
+        definida en schema.graphqls. El campo "operationName" solo es
+        obligatorio si el documento "query" define mas de una operacion.
+      operationId: ejecutarOperacionGraphQL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GraphQLRequest'
+            examples:
+              listarTickets:
+                summary: "Query: tickets filtrados y paginados"
+                value:
+                  query: >
+                    query ListarTickets($estado: Estado, $prioridad: Prioridad, $page: Int, $size: Int) {
+                      tickets(estado: $estado, prioridad: $prioridad, page: $page, size: $size) {
+                        content { id titulo prioridad estado tecnicoAsignado fechaCreacion }
+                        page size totalElements totalPages nextPage previousPage
+                      }
+                    }
+                  variables:
+                    estado: "ABIERTO"
+                    prioridad: "ALTA"
+                    page: 0
+                    size: 10
+              obtenerTicket:
+                summary: "Query: detalle de un ticket por id"
+                value:
+                  query: >
+                    query ($id: ID!) {
+                      ticket(id: $id) { id titulo descripcion prioridad estado tecnicoAsignado fechaCreacion }
+                    }
+                  variables:
+                    id: "550e8400-e29b-41d4-a716-446655440000"
+              crearTicket:
+                summary: "Mutation: crear un ticket"
+                value:
+                  query: >
+                    mutation ($titulo: String!, $descripcion: String!, $prioridad: Prioridad!) {
+                      crearTicket(titulo: $titulo, descripcion: $descripcion, prioridad: $prioridad) {
+                        id estado tecnicoAsignado fechaCreacion
+                      }
+                    }
+                  variables:
+                    titulo: "No enciende el computador"
+                    descripcion: "El equipo del área contable no enciende desde esta mañana"
+                    prioridad: "ALTA"
+              actualizarEstadoTicket:
+                summary: "Mutation: cambiar el estado de un ticket"
+                value:
+                  query: >
+                    mutation ($id: ID!, $estado: Estado!) {
+                      actualizarEstadoTicket(id: $id, estado: $estado) { id estado }
+                    }
+                  variables:
+                    id: "550e8400-e29b-41d4-a716-446655440000"
+                    estado: "EN_ATENCION"
+              notificacionesPorTicket:
+                summary: "Query: historial de notificaciones de un ticket"
+                value:
+                  query: >
+                    query ($ticketId: ID!) {
+                      notificacionesPorTicket(ticketId: $ticketId) { id ticketId mensaje fechaEnvio }
+                    }
+                  variables:
+                    ticketId: "550e8400-e29b-41d4-a716-446655440000"
+              notificaciones:
+                summary: "Query: todas las notificaciones, paginadas"
+                value:
+                  query: >
+                    query ($page: Int, $size: Int) {
+                      notificaciones(page: $page, size: $size) {
+                        content { id ticketId mensaje fechaEnvio }
+                        page size totalElements totalPages nextPage previousPage
+                      }
+                    }
+                  variables:
+                    page: 0
+                    size: 5
+      responses:
+        '200':
+          description: >
+            GraphQL siempre responde 200, tanto si la operacion tuvo exito
+            ("data" sin "errors") como si fallo ("errors" presente; "data"
+            puede venir ausente, null, o parcial con los campos que si se
+            resolvieron). El transporte HTTP no distingue exito de error;
+            hay que inspeccionar el body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GraphQLResponse'
+              examples:
+                exitoListarTickets:
+                  summary: Respuesta exitosa de la query tickets
+                  value:
+                    data:
+                      tickets:
+                        content:
+                          - id: "550e8400-e29b-41d4-a716-446655440000"
+                            titulo: "No enciende el computador"
+                            prioridad: "ALTA"
+                            estado: "ABIERTO"
+                            tecnicoAsignado: "Carlos Perez"
+                            fechaCreacion: "2026-03-10T19:32:00.123456Z"
+                        page: 0
+                        size: 10
+                        totalElements: 1
+                        totalPages: 1
+                        nextPage: false
+                        previousPage: false
+                exitoCrearTicket:
+                  summary: Respuesta exitosa de la mutation crearTicket
+                  value:
+                    data:
+                      crearTicket:
+                        id: "550e8400-e29b-41d4-a716-446655440000"
+                        estado: "ABIERTO"
+                        tecnicoAsignado: "Carlos Perez"
+                        fechaCreacion: "2026-03-10T19:32:00.123456Z"
+                errorNotFound:
+                  summary: "ticket(id) con un id que no existe en ticket-service"
+                  value:
+                    errors:
+                      - message: "No se encontro el ticket con id 00000000-0000-0000-0000-000000000000"
+                        path: ["ticket"]
+                        extensions:
+                          code: "NOT_FOUND"
+                          classification: "NOT_FOUND"
+                    data:
+                      ticket: null
+                errorBadRequestValidacion:
+                  summary: "crearTicket con un titulo que incumple las reglas de ticket-service"
+                  value:
+                    errors:
+                      - message: "titulo: Escribe un título de al menos 5 caracteres."
+                        path: ["crearTicket"]
+                        extensions:
+                          code: "BAD_REQUEST"
+                          classification: "BAD_REQUEST"
+                    data: null
+                errorBadRequestTransicion:
+                  summary: "actualizarEstadoTicket con una transicion no permitida"
+                  value:
+                    errors:
+                      - message: "No se puede cambiar el estado de CERRADO a ABIERTO"
+                        path: ["actualizarEstadoTicket"]
+                        extensions:
+                          code: "BAD_REQUEST"
+                          classification: "BAD_REQUEST"
+                    data: null
+                errorServiceUnavailable:
+                  summary: ticket-service o notification-service no respondieron a tiempo
+                  value:
+                    errors:
+                      - message: "ticket-service no esta disponible o no respondio a tiempo"
+                        path: ["tickets"]
+                        extensions:
+                          code: "SERVICE_UNAVAILABLE"
+                          classification: "INTERNAL_ERROR"
+                    data: null
+                errorValidacionGraphQL:
+                  summary: Argumento obligatorio ausente o enum invalido (rechazado antes de llamar a cualquier servicio)
+                  value:
+                    errors:
+                      - message: "Variable 'estado' has an invalid value: Invalid input for enum 'Estado'. No value found for name 'FOO'"
+                        extensions:
+                          classification: "ValidationError"
+
+components:
+  schemas:
+    GraphQLRequest:
+      type: object
+      description: Cuerpo estandar de una peticion GraphQL sobre HTTP (sin extensiones propias del gateway).
+      required: [query]
+      properties:
+        query:
+          type: string
+          description: Documento GraphQL con la query o mutation a ejecutar.
+        operationName:
+          type: string
+          nullable: true
+          description: Obligatorio solo si "query" define mas de una operacion.
+        variables:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Variables referenciadas por "query".
+
+    GraphQLResponse:
+      type: object
+      description: Cuerpo estandar de una respuesta GraphQL sobre HTTP. Siempre HTTP 200.
+      properties:
+        data:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Resultado de la operacion. Ausente o null si la operacion raiz fallo antes de poder resolverse.
+        errors:
+          type: array
+          description: Presente solo si hubo al menos un error.
+          items:
+            $ref: '#/components/schemas/GraphQLError'
+
+    GraphQLError:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+          description: Mensaje legible para el cliente (nunca un stack trace).
+        path:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Campo de la query/mutation donde ocurrio el error.
+        extensions:
+          type: object
+          description: Incluye "code" con el valor que usa el gateway para clasificar el error.
+          properties:
+            code:
+              type: string
+              enum: [NOT_FOUND, BAD_REQUEST, SERVICE_UNAVAILABLE, INTERNAL_ERROR]
+              description: >
+                NOT_FOUND: el servicio delegado respondio 404.
+                BAD_REQUEST: datos invalidos, transicion de estado invalida o parametro invalido (400 del servicio delegado).
+                SERVICE_UNAVAILABLE: ticket-service o notification-service no respondieron dentro del timeout.
+                INTERNAL_ERROR: el servicio delegado respondio un error HTTP inesperado (5xx) u otra falla no clasificada.
+                Ausente si el error es una validacion GraphQL estandar (argumento faltante, enum invalido) que nunca llego a llamar a un servicio.
+            classification:
+              type: string
+              description: Clasificacion estandar de Spring for GraphQL (NOT_FOUND, BAD_REQUEST, INTERNAL_ERROR, ValidationError, etc.).

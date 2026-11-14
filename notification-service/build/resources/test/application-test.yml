@@ -1,0 +1,16 @@
+# Perfil "test": H2 en memoria, solo para que ./gradlew test corra sin
+# necesitar PostgreSQL levantado. El perfil por defecto sigue usando
+# PostgreSQL (application.yml).
+spring:
+  datasource:
+    url: jdbc:h2:mem:notification_db;MODE=PostgreSQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    defer-datasource-initialization: true
+  sql:
+    init:
+      mode: always

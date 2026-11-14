@@ -1,0 +1,69 @@
+# Esquema del graphql-gateway de AgilTI: UNICA puerta de entrada del frontend.
+# Cada campo se resuelve delegando por REST en el microservicio dueno del
+# dato; el gateway no tiene base de datos ni Kafka ni logica de negocio.
+#   - ticket-service:       tickets, ticket, crearTicket, actualizarEstadoTicket
+#   - notification-service: notificaciones, notificacionesPorTicket
+# Errores en errors[].extensions.code: NOT_FOUND, BAD_REQUEST,
+# SERVICE_UNAVAILABLE, INTERNAL_ERROR.
+
+type Query {
+  "Listado paginado de tickets, con filtros opcionales (GET /api/tickets de ticket-service)."
+  tickets(estado: Estado, prioridad: Prioridad, page: Int = 0, size: Int = 10): TicketPage!
+  "Detalle de un ticket por su UUID (GET /api/tickets/{id} de ticket-service)."
+  ticket(id: ID!): Ticket
+  "Listado paginado de notificaciones, mas reciente primero (GET /api/notificaciones de notification-service)."
+  notificaciones(page: Int = 0, size: Int = 20): NotificacionPage!
+  "Historial de notificaciones de un ticket, mas reciente primero (GET /api/notificaciones/ticket/{ticketId} de notification-service)."
+  notificacionesPorTicket(ticketId: ID!): [Notificacion!]!
+}
+
+type Mutation {
+  "Crea un ticket (POST /api/tickets de ticket-service). ticket-service asigna el tecnico y publica el evento Kafka ticket-creado."
+  crearTicket(titulo: String!, descripcion: String!, prioridad: Prioridad!): Ticket!
+  "Cambia el estado de un ticket (PATCH /api/tickets/{id}/estado de ticket-service). Solo ABIERTO -> EN_ATENCION -> CERRADO; otra transicion da BAD_REQUEST."
+  actualizarEstadoTicket(id: ID!, estado: Estado!): Ticket!
+}
+
+enum Estado { ABIERTO EN_ATENCION CERRADO }
+
+enum Prioridad { BAJA MEDIA ALTA }
+
+type Ticket {
+  id: ID!
+  titulo: String!
+  descripcion: String
+  prioridad: Prioridad!
+  estado: Estado!
+  tecnicoAsignado: String
+  "Fecha ISO-8601 tal como la devuelve ticket-service."
+  fechaCreacion: String
+}
+
+type TicketPage {
+  content: [Ticket!]!
+  page: Int!
+  size: Int!
+  totalElements: Int!
+  totalPages: Int!
+  nextPage: Boolean!
+  previousPage: Boolean!
+}
+
+type Notificacion {
+  id: ID!
+  "UUID del ticket al que pertenece (referencia logica, no llave foranea)."
+  ticketId: ID!
+  mensaje: String!
+  "Fecha ISO-8601 tal como la devuelve notification-service."
+  fechaEnvio: String
+}
+
+type NotificacionPage {
+  content: [Notificacion!]!
+  page: Int!
+  size: Int!
+  totalElements: Int!
+  totalPages: Int!
+  nextPage: Boolean!
+  previousPage: Boolean!
+}

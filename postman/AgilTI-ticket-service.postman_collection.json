@@ -1,0 +1,1045 @@
+{
+  "info": {
+    "name": "AgilTI - ticket-service",
+    "description": "Coleccion para probar en tiempo real los 4 endpoints de ticket-service, segun el contrato ticket-service-openapi.yaml. Incluye casos de exito y de error (400/404).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "ticketId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Crear ticket (201)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status es 201', function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "pm.test('El ticket trae tecnicoAsignado', function () {",
+              "    const body = pm.response.json();",
+              "    pm.expect(body.tecnicoAsignado).to.not.be.null;",
+              "    pm.expect(body.estado).to.eql('ABIERTO');",
+              "});",
+              "const body = pm.response.json();",
+              "pm.collectionVariables.set('ticketId', body.id);",
+              "console.log('ticketId guardado:', body.id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"titulo\": \"No enciende el computador\",\n  \"descripcion\": \"El equipo del area contable no enciende desde esta manana\",\n  \"prioridad\": \"ALTA\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/tickets",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tickets"
+          ]
+        }
+      }
+    },
+    {
+      "name": "2. Crear ticket sin titulo (400)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status es 400', function () { pm.response.to.have.status(400); });",
+              "pm.test('mensaje exacto: titulo obligatorio', function () {",
+              "    pm.expect(pm.response.json().mensaje).to.eql(\"titulo: El título es obligatorio.\");",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"descripcion\": \"Falta el titulo a proposito\",\n  \"prioridad\": \"MEDIA\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/tickets",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tickets"
+          ]
+        }
+      }
+    },
+    {
+      "name": "2.1 Titulo con \"<\" repetido (400)",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Guarda cuantos tickets hay para comprobar luego que el rechazo no creo ninguno",
+              "pm.sendRequest(pm.variables.get('baseUrl') + '/api/tickets?size=1', function (err, res) {",
+              "    pm.variables.set('totalAntes', err ? -1 : res.json().totalElements);",
+              "});"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status es 400', function () { pm.response.to.have.status(400); });",
+              "pm.test('mensaje exacto de la regla', function () {",
+              "    pm.expect(pm.response.json().mensaje).to.eql(\"titulo: El título contiene caracteres no permitidos. Usa solo letras, números y signos básicos como . , - ( ).\");",
+              "});",
+              "pm.sendRequest(pm.variables.get('baseUrl') + '/api/tickets?size=1', function (err, res) {",
+              "    pm.test('No se creo ningun ticket', function () {",
+              "        pm.expect(err).to.be.null;",
+              "        pm.expect(res.json().totalElements).to.eql(Number(pm.variables.get('totalAntes')));",
+              "    });",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"titulo\": \"<<<<<<<<<<<<<<<<<<<<\",\n  \"descripcion\": \"El equipo no enciende desde esta mañana.\",\n  \"prioridad\": \"MEDIA\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/tickets",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tickets"
+          ]
+        }
+      }
+    },
+    {
+      "name": "2.2 Titulo con \"&\" (400)",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Guarda cuantos tickets hay para comprobar luego que el rechazo no creo ninguno",
+              "pm.sendRequest(pm.variables.get('baseUrl') + '/api/tickets?size=1', function (err, res) {",
+              "    pm.variables.set('totalAntes', err ? -1 : res.json().totalElements);",
+              "});"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status es 400', function () { pm.response.to.have.status(400); });",
+              "pm.test('mensaje exacto de la regla', function () {",
+              "    pm.expect(pm.response.json().mensaje).to.eql(\"titulo: El título contiene caracteres no permitidos. Usa solo letras, números y signos básicos como . , - ( ).\");",
+              "});",
+              "pm.sendRequest(pm.variables.get('baseUrl') + '/api/tickets?size=1', function (err, res) {",
+              "    pm.test('No se creo ningun ticket', function () {",
+              "        pm.expect(err).to.be.null;",
+              "        pm.expect(res.json().totalElements).to.eql(Number(pm.variables.get('totalAntes')));",
+              "    });",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"titulo\": \"Red & internet caídas\",\n  \"descripcion\": \"El equipo no enciende desde esta mañana.\",\n  \"prioridad\": \"MEDIA\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/tickets",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tickets"
+          ]
+        }
+      }
+    },
+    {
+      "name": "2.3 Titulo de 81 caracteres (400)",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Guarda cuantos tickets hay para comprobar luego que el rechazo no creo ninguno",
+              "pm.sendRequest(pm.variables.get('baseUrl') + '/api/tickets?size=1', function (err, res) {",
+              "    pm.variables.set('totalAntes', err ? -1 : res.json().totalElements);",
+              "});"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status es 400', function () { pm.response.to.have.status(400); });",
+              "pm.test('mensaje exacto de la regla', function () {",
+              "    pm.expect(pm.response.json().mensaje).to.eql(\"titulo: El título es muy largo. Resúmelo en pocas palabras (máximo 80 caracteres) y deja los detalles en la descripción.\");",
+              "});",
+              "pm.sendRequest(pm.variables.get('baseUrl') + '/api/tickets?size=1', function (err, res) {",
+              "    pm.test('No se creo ningun ticket', function () {",
+              "        pm.expect(err).to.be.null;",
+              "        pm.expect(res.json().totalElements).to.eql(Number(pm.variables.get('totalAntes')));",
+              "    });",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"titulo\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\n  \"descripcion\": \"El equipo no enciende desde esta mañana.\",\n  \"prioridad\": \"MEDIA\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/tickets",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tickets"
+          ]
+        }
+      }
+    },
+    {
+      "name": "2.4 Titulo de 4 caracteres (400)",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Guarda cuantos tickets hay para comprobar luego que el rechazo no creo ninguno",
+              "pm.sendRequest(pm.variables.get('baseUrl') + '/api/tickets?size=1', function (err, res) {",
+              "    pm.variables.set('totalAntes', err ? -1 : res.json().totalElements);",
+              "});"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status es 400', function () { pm.response.to.have.status(400); });",
+              "pm.test('mensaje exacto de la regla', function () {",
+              "    pm.expect(pm.response.json().mensaje).to.eql(\"titulo: Escribe un título de al menos 5 caracteres.\");",
+              "});",
+              "pm.sendRequest(pm.variables.get('baseUrl') + '/api/tickets?size=1', function (err, res) {",
+              "    pm.test('No se creo ningun ticket', function () {",
+              "        pm.expect(err).to.be.null;",
+              "        pm.expect(res.json().totalElements).to.eql(Number(pm.variables.get('totalAntes')));",
+              "    });",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"titulo\": \"Wifi\",\n  \"descripcion\": \"El equipo no enciende desde esta mañana.\",\n  \"prioridad\": \"MEDIA\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/tickets",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tickets"
+          ]
+        }
+      }
+    },
+    {
+      "name": "2.5 Titulo vacio (400)",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Guarda cuantos tickets hay para comprobar luego que el rechazo no creo ninguno",
+              "pm.sendRequest(pm.variables.get('baseUrl') + '/api/tickets?size=1', function (err, res) {",
+              "    pm.variables.set('totalAntes', err ? -1 : res.json().totalElements);",
+              "});"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status es 400', function () { pm.response.to.have.status(400); });",
+              "pm.test('mensaje exacto de la regla', function () {",
+              "    pm.expect(pm.response.json().mensaje).to.eql(\"titulo: El título es obligatorio.\");",
+              "});",
+              "pm.sendRequest(pm.variables.get('baseUrl') + '/api/tickets?size=1', function (err, res) {",
+              "    pm.test('No se creo ningun ticket', function () {",
+              "        pm.expect(err).to.be.null;",
+              "        pm.expect(res.json().totalElements).to.eql(Number(pm.variables.get('totalAntes')));",
+              "    });",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"titulo\": \"\",\n  \"descripcion\": \"El equipo no enciende desde esta mañana.\",\n  \"prioridad\": \"MEDIA\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/tickets",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tickets"
+          ]
+        }
+      }
+    },
+    {
+      "name": "2.6 Titulo solo numeros (400)",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Guarda cuantos tickets hay para comprobar luego que el rechazo no creo ninguno",
+              "pm.sendRequest(pm.variables.get('baseUrl') + '/api/tickets?size=1', function (err, res) {",
+              "    pm.variables.set('totalAntes', err ? -1 : res.json().totalElements);",
+              "});"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status es 400', function () { pm.response.to.have.status(400); });",
+              "pm.test('mensaje exacto de la regla', function () {",
+              "    pm.expect(pm.response.json().mensaje).to.eql(\"titulo: El título contiene caracteres no permitidos. Usa solo letras, números y signos básicos como . , - ( ).\");",
+              "});",
+              "pm.sendRequest(pm.variables.get('baseUrl') + '/api/tickets?size=1', function (err, res) {",
+              "    pm.test('No se creo ningun ticket', function () {",
+              "        pm.expect(err).to.be.null;",
+              "        pm.expect(res.json().totalElements).to.eql(Number(pm.variables.get('totalAntes')));",
+              "    });",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"titulo\": \"1234567\",\n  \"descripcion\": \"El equipo no enciende desde esta mañana.\",\n  \"prioridad\": \"MEDIA\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/tickets",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tickets"
+          ]
+        }
+      }
+    },
+    {
+      "name": "2.7 Titulo solo simbolos (400)",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Guarda cuantos tickets hay para comprobar luego que el rechazo no creo ninguno",
+              "pm.sendRequest(pm.variables.get('baseUrl') + '/api/tickets?size=1', function (err, res) {",
+              "    pm.variables.set('totalAntes', err ? -1 : res.json().totalElements);",
+              "});"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status es 400', function () { pm.response.to.have.status(400); });",
+              "pm.test('mensaje exacto de la regla', function () {",
+              "    pm.expect(pm.response.json().mensaje).to.eql(\"titulo: El título contiene caracteres no permitidos. Usa solo letras, números y signos básicos como . , - ( ).\");",
+              "});",
+              "pm.sendRequest(pm.variables.get('baseUrl') + '/api/tickets?size=1', function (err, res) {",
+              "    pm.test('No se creo ningun ticket', function () {",
+              "        pm.expect(err).to.be.null;",
+              "        pm.expect(res.json().totalElements).to.eql(Number(pm.variables.get('totalAntes')));",
+              "    });",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"titulo\": \"¿¡-_/#!?\",\n  \"descripcion\": \"El equipo no enciende desde esta mañana.\",\n  \"prioridad\": \"MEDIA\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/tickets",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tickets"
+          ]
+        }
+      }
+    },
+    {
+      "name": "2.8 Descripcion de 9 caracteres (400)",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Guarda cuantos tickets hay para comprobar luego que el rechazo no creo ninguno",
+              "pm.sendRequest(pm.variables.get('baseUrl') + '/api/tickets?size=1', function (err, res) {",
+              "    pm.variables.set('totalAntes', err ? -1 : res.json().totalElements);",
+              "});"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status es 400', function () { pm.response.to.have.status(400); });",
+              "pm.test('mensaje exacto de la regla', function () {",
+              "    pm.expect(pm.response.json().mensaje).to.eql(\"descripcion: La descripción debe tener al menos 10 caracteres. Cuéntanos un poco más sobre el problema.\");",
+              "});",
+              "pm.sendRequest(pm.variables.get('baseUrl') + '/api/tickets?size=1', function (err, res) {",
+              "    pm.test('No se creo ningun ticket', function () {",
+              "        pm.expect(err).to.be.null;",
+              "        pm.expect(res.json().totalElements).to.eql(Number(pm.variables.get('totalAntes')));",
+              "    });",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"titulo\": \"Equipo sin red\",\n  \"descripcion\": \"123456789\",\n  \"prioridad\": \"MEDIA\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/tickets",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tickets"
+          ]
+        }
+      }
+    },
+    {
+      "name": "2.9 Descripcion \"a\" (400)",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Guarda cuantos tickets hay para comprobar luego que el rechazo no creo ninguno",
+              "pm.sendRequest(pm.variables.get('baseUrl') + '/api/tickets?size=1', function (err, res) {",
+              "    pm.variables.set('totalAntes', err ? -1 : res.json().totalElements);",
+              "});"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status es 400', function () { pm.response.to.have.status(400); });",
+              "pm.test('mensaje exacto de la regla', function () {",
+              "    pm.expect(pm.response.json().mensaje).to.eql(\"descripcion: La descripción debe tener al menos 10 caracteres. Cuéntanos un poco más sobre el problema.\");",
+              "});",
+              "pm.sendRequest(pm.variables.get('baseUrl') + '/api/tickets?size=1', function (err, res) {",
+              "    pm.test('No se creo ningun ticket', function () {",
+              "        pm.expect(err).to.be.null;",
+              "        pm.expect(res.json().totalElements).to.eql(Number(pm.variables.get('totalAntes')));",
+              "    });",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"titulo\": \"Equipo sin red\",\n  \"descripcion\": \"a\",\n  \"prioridad\": \"MEDIA\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/tickets",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tickets"
+          ]
+        }
+      }
+    },
+    {
+      "name": "2.10 Titulo con tildes y ñ (201)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status es 201', function () { pm.response.to.have.status(201); });",
+              "pm.test('Guarda el titulo y la descripcion tal cual', function () {",
+              "    const t = pm.response.json();",
+              "    pm.expect(t.titulo).to.eql(\"Configuración del cañón y pingüino\");",
+              "    pm.expect(t.descripcion).to.eql(\"El equipo no enciende desde esta mañana.\");",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"titulo\": \"Configuración del cañón y pingüino\",\n  \"descripcion\": \"El equipo no enciende desde esta mañana.\",\n  \"prioridad\": \"MEDIA\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/tickets",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tickets"
+          ]
+        }
+      }
+    },
+    {
+      "name": "2.11 Titulo con todos los signos permitidos (201)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status es 201', function () { pm.response.to.have.status(201); });",
+              "pm.test('Guarda el titulo y la descripcion tal cual', function () {",
+              "    const t = pm.response.json();",
+              "    pm.expect(t.titulo).to.eql(\"¿Error #12? ¡Sí!: red, piso 3; (VPN) A-B_C/D.\");",
+              "    pm.expect(t.descripcion).to.eql(\"El equipo no enciende desde esta mañana.\");",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"titulo\": \"¿Error #12? ¡Sí!: red, piso 3; (VPN) A-B_C/D.\",\n  \"descripcion\": \"El equipo no enciende desde esta mañana.\",\n  \"prioridad\": \"MEDIA\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/tickets",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tickets"
+          ]
+        }
+      }
+    },
+    {
+      "name": "2.12 Descripcion de 10 caracteres (201)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status es 201', function () { pm.response.to.have.status(201); });",
+              "pm.test('Guarda el titulo y la descripcion tal cual', function () {",
+              "    const t = pm.response.json();",
+              "    pm.expect(t.titulo).to.eql(\"Equipo sin red\");",
+              "    pm.expect(t.descripcion).to.eql(\"1234567890\");",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"titulo\": \"Equipo sin red\",\n  \"descripcion\": \"1234567890\",\n  \"prioridad\": \"MEDIA\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/tickets",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tickets"
+          ]
+        }
+      }
+    },
+    {
+      "name": "3. Listar tickets paginados (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status es 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('La respuesta tiene estructura de paginacion', function () {",
+              "    const body = pm.response.json();",
+              "    pm.expect(body).to.include.all.keys('content', 'page', 'size', 'totalElements', 'totalPages', 'nextPage', 'previousPage');",
+              "    pm.expect(body.nextPage).to.be.a('boolean');",
+              "    pm.expect(body.previousPage).to.be.a('boolean');",
+              "    pm.expect(body.content).to.be.an('array');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/tickets",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tickets"
+          ]
+        }
+      }
+    },
+    {
+      "name": "4. Consultar ticket por id (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status es 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('El id coincide con el solicitado', function () {",
+              "    const body = pm.response.json();",
+              "    pm.expect(body.id).to.eql(pm.collectionVariables.get('ticketId'));",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/tickets/{{ticketId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tickets",
+            "{{ticketId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "5. Consultar ticket inexistente (404)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status es 404', function () {",
+              "    pm.response.to.have.status(404);",
+              "});",
+              "pm.test('Mensaje menciona el id', function () {",
+              "    const body = pm.response.json();",
+              "    pm.expect(body.mensaje).to.include('00000000-0000-0000-0000-000000000000');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/tickets/00000000-0000-0000-0000-000000000000",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tickets",
+            "00000000-0000-0000-0000-000000000000"
+          ]
+        }
+      }
+    },
+    {
+      "name": "6. Cambiar estado a EN_ATENCION (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status es 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('El estado cambio a EN_ATENCION', function () {",
+              "    const body = pm.response.json();",
+              "    pm.expect(body.estado).to.eql('EN_ATENCION');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"estado\": \"EN_ATENCION\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/tickets/{{ticketId}}/estado",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tickets",
+            "{{ticketId}}",
+            "estado"
+          ]
+        }
+      }
+    },
+    {
+      "name": "7. Transicion invalida: saltar a ABIERTO (400)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status es 400 (retroceso no permitido)', function () {",
+              "    pm.response.to.have.status(400);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"estado\": \"ABIERTO\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/tickets/{{ticketId}}/estado",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tickets",
+            "{{ticketId}}",
+            "estado"
+          ]
+        }
+      }
+    },
+    {
+      "name": "8. Cambiar estado a CERRADO (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status es 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('El estado cambio a CERRADO', function () {",
+              "    const body = pm.response.json();",
+              "    pm.expect(body.estado).to.eql('CERRADO');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"estado\": \"CERRADO\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/tickets/{{ticketId}}/estado",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tickets",
+            "{{ticketId}}",
+            "estado"
+          ]
+        }
+      }
+    },
+    {
+      "name": "9. Listar tickets filtrados por estado y prioridad (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status es 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('Todos los resultados respetan el filtro', function () {",
+              "    const body = pm.response.json();",
+              "    body.content.forEach(function (t) {",
+              "        pm.expect(t.estado).to.eql('ABIERTO');",
+              "        pm.expect(t.prioridad).to.eql('ALTA');",
+              "    });",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/tickets?estado=ABIERTO&prioridad=ALTA&page=0&size=5",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tickets"
+          ],
+          "query": [
+            {
+              "key": "estado",
+              "value": "ABIERTO"
+            },
+            {
+              "key": "prioridad",
+              "value": "ALTA"
+            },
+            {
+              "key": "page",
+              "value": "0"
+            },
+            {
+              "key": "size",
+              "value": "5"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

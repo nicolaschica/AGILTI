@@ -1,0 +1,38 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: graphql-gateway
+  graphql:
+    path: /graphql
+    graphiql:
+      # El GraphiQL integrado carga sus archivos desde unpkg.com y no funciona
+      # sin internet. Se usa /graphiql-local (ver GraphiqlLocalConfig);
+      # /graphiql redirige alli.
+      enabled: false
+    cors:
+      # Frontend React (Vite en 5173, contenedor nginx en 3000): el gateway es
+      # el UNICO backend al que llama el navegador.
+      allowed-origins:
+        - http://localhost:5173
+        - http://localhost:3000
+      allowed-methods: GET, POST, OPTIONS
+      allowed-headers: "*"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+agilti:
+  ticket-service:
+    # En Docker Compose se sobreescribe con TICKET_SERVICE_URL=http://ticket-service:8080
+    url: ${TICKET_SERVICE_URL:http://localhost:8080}
+    # Tiempo maximo para conectar y para esperar respuesta de ticket-service
+    timeout: ${TICKET_SERVICE_TIMEOUT:4s}
+  notification-service:
+    # En Docker Compose se sobreescribe con NOTIFICATION_SERVICE_URL=http://notification-service:8081
+    url: ${NOTIFICATION_SERVICE_URL:http://localhost:8081}
+    timeout: ${NOTIFICATION_SERVICE_TIMEOUT:4s}

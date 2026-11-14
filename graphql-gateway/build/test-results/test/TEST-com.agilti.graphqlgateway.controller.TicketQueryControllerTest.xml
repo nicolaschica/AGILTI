@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.agilti.graphqlgateway.controller.TicketQueryControllerTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-11-05T16:10:16" hostname="a33801f769b4" time="0.063">
+  <properties/>
+  <testcase name="ticketServiceCaidoDevuelveServiceUnavailable()" classname="com.agilti.graphqlgateway.controller.TicketQueryControllerTest" time="0.012"/>
+  <testcase name="ticketsMapeaPageResponseYPasaFiltros()" classname="com.agilti.graphqlgateway.controller.TicketQueryControllerTest" time="0.029"/>
+  <testcase name="ticketInexistenteDevuelveNotFound()" classname="com.agilti.graphqlgateway.controller.TicketQueryControllerTest" time="0.011"/>
+  <testcase name="ticketPorIdDevuelveElTicket()" classname="com.agilti.graphqlgateway.controller.TicketQueryControllerTest" time="0.007"/>
+  <system-out><![CDATA[2026-11-05T16:10:12.604Z  INFO 289 --- [graphql-gateway] [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.agilti.graphqlgateway.controller.TicketQueryControllerTest]: TicketQueryControllerTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-11-05T16:10:12.817Z  INFO 289 --- [graphql-gateway] [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.agilti.graphqlgateway.GraphqlGatewayApplication for test class com.agilti.graphqlgateway.controller.TicketQueryControllerTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.4)
+
+2026-11-05T16:10:13.534Z  INFO 289 --- [graphql-gateway] [    Test worker] c.a.g.c.TicketQueryControllerTest        : Starting TicketQueryControllerTest using Java 21.0.5 with PID 289 (started by root in /app)
+2026-11-05T16:10:13.535Z  INFO 289 --- [graphql-gateway] [    Test worker] c.a.g.c.TicketQueryControllerTest        : No active profile set, falling back to 1 default profile: "default"
+2026-11-05T16:10:16.565Z  INFO 289 --- [graphql-gateway] [    Test worker] efaultSchemaResourceGraphQlSourceBuilder : Loaded 1 resource(s) in the GraphQL schema.
+2026-11-05T16:10:16.589Z  INFO 289 --- [graphql-gateway] [    Test worker] o.s.b.a.g.GraphQlAutoConfiguration       : GraphQL schema inspection:
+	Unmapped fields: {Query=[notificaciones, notificacionesPorTicket], Mutation=[crearTicket, actualizarEstadoTicket]}
+	Unmapped registrations: {}
+	Unmapped arguments: {}
+	Skipped types: []
+2026-11-05T16:10:16.603Z  INFO 289 --- [graphql-gateway] [    Test worker] c.a.g.c.TicketQueryControllerTest        : Started TicketQueryControllerTest in 3.745 seconds (process running for 113.901)
+2026-11-05T16:10:16.616Z  WARN 289 --- [graphql-gateway] [    Test worker] c.a.g.c.GraphQlExceptionResolver         : ticket-service no disponible: Connection refused
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

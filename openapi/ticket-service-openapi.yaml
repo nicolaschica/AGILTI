@@ -1,0 +1,509 @@
+openapi: 3.0.3
+info:
+  title: AgilTI - Ticket Service API
+  description: >
+    API REST para la gestion de tickets de soporte tecnico.
+    ticket-service es la unica fuente de verdad para crear, consultar y
+    actualizar tickets.
+
+    Asignacion automatica de tecnico (RF-07): al crear un ticket se asigna,
+    en orden ciclico (round-robin), uno de los tecnicos configurados en
+    `agilti.tecnicos` (application.yml). El reparto usa un contador en
+    memoria de una sola instancia del servicio; si no hay tecnicos
+    configurados, tecnicoAsignado queda en null.
+
+    Maquina de estados (RF-03): las unicas transiciones permitidas son
+    ABIERTO -> EN_ATENCION y EN_ATENCION -> CERRADO. No se permiten
+    retrocesos ni saltos (por ejemplo ABIERTO -> CERRADO directo); cualquier
+    otra transicion responde 400.
+
+    Evento Kafka "ticket-creado": al persistirse correctamente un ticket
+    nuevo, ticket-service publica en el topico "ticket-creado" un
+    TicketCreadoEvent con los campos eventoId (UUID propio del evento),
+    tipoEvento (siempre "TICKET_CREADO"), fechaEvento (instante de
+    publicacion en UTC, serializado como numero: epoch en segundos con
+    parte decimal, no como texto ISO-8601), ticketId, titulo, prioridad y
+    tecnicoAsignado (el ya asignado por round-robin). Este evento no es
+    parte de este contrato REST —OpenAPI no describe Kafka—, pero se
+    documenta aqui porque notification-service lo consume para generar
+    cada notificacion.
+
+    Actualizado para la entrega Q10 "API REST y persistencia funcional":
+    el listado de tickets ahora admite filtros opcionales (estado,
+    prioridad) y paginacion, ya que la cantidad de tickets puede crecer
+    sin limite con el tiempo.
+
+    v3.1.0: contrato alineado con el JSON real del servicio (la pagina
+    incluye nextPage/previousPage, respuestas 400 de validacion de
+    parametros, header Location en el 201 y fechas en UTC).
+
+    v3.2.0: el JSON mal formado y los valores fuera del enum en el body
+    tambien responden 400 con ErrorResponse ({ mensaje }).
+
+    v3.3.0: validacion de contenido al crear un ticket. El titulo se
+    normaliza (trim + espacios repetidos reducidos a uno) y debe tener de 5
+    a 80 caracteres, al menos una letra y solo caracteres de una lista
+    blanca. La descripcion debe tener al menos 10 caracteres tras recortar
+    espacios. Cada regla rechazada responde 400 con un mensaje fijo
+    ("campo: texto"). Actualizar el estado no cambia.
+
+    v3.4.0: se documenta explicitamente la estructura del evento Kafka
+    "ticket-creado" (antes solo se mencionaba su existencia) y se agregan
+    los ejemplos 400 que faltaban: prioridad ausente al crear, y los casos
+    de PATCH /api/tickets/{id}/estado (transicion invalida, estado ausente,
+    estado fuera del enum, id invalido).
+
+    v3.4.1: corrige el tipo de fechaEvento en TicketCreadoEvent. Verificado
+    leyendo mensajes reales del topico "ticket-creado": no es texto
+    ISO-8601, sino un numero (epoch en segundos con parte decimal, p. ej.
+    1794504997.106434817), producido por el JsonSerializer de Kafka sobre
+    OffsetDateTime. No afecta a fechaCreacion (Ticket) ni a fechaEnvio
+    (Notificacion), que SI son ISO-8601 porque las devuelve el API REST.
+  version: "3.4.1"
+
+servers:
+  - url: http://localhost:8080
+    description: Entorno local (Docker Compose)
+
+tags:
+  - name: Tickets
+    description: Operaciones sobre el ciclo de vida de un ticket
+
+paths:
+  /api/tickets:
+    post:
+      tags: [Tickets]
+      summary: Crear un nuevo ticket
+      description: >
+        Registra una nueva solicitud de soporte tecnico (RF-01) y asigna
+        automaticamente un tecnico disponible (RF-07, round-robin). Al
+        persistirse correctamente, se publica el evento "ticket-creado" en
+        Kafka con el tecnico ya incluido (ver schema TicketCreadoEvent;
+        no es parte de la respuesta HTTP).
+
+        Antes de validar y de guardar, el titulo se recorta y sus espacios
+        repetidos se reducen a uno; la descripcion se recorta. Si se
+        incumplen varias reglas se informa solo una, en este orden: titulo
+        antes que descripcion y, dentro de cada campo, obligatorio >
+        caracteres no permitidos > longitud.
+      operationId: crearTicket
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketCreateRequest'
+            example:
+              titulo: "No enciende el computador"
+              descripcion: "El equipo del area contable no enciende desde esta manana"
+              prioridad: "ALTA"
+      responses:
+        '201':
+          description: Ticket creado correctamente (con tecnico ya asignado)
+          headers:
+            Location:
+              description: Ruta del ticket creado
+              schema:
+                type: string
+                example: "/api/tickets/550e8400-e29b-41d4-a716-446655440000"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+              example:
+                id: "550e8400-e29b-41d4-a716-446655440000"
+                titulo: "No enciende el computador"
+                descripcion: "El equipo del area contable no enciende desde esta manana"
+                prioridad: "ALTA"
+                estado: "ABIERTO"
+                tecnicoAsignado: "Carlos Perez"
+                fechaCreacion: "2026-03-10T19:32:00.123456Z"
+        '400':
+          description: >
+            Datos de entrada invalidos: falta un campo obligatorio, el
+            titulo o la descripcion incumplen sus reglas (ver
+            TicketCreateRequest), la prioridad no es un valor del enum o el
+            JSON esta mal formado. Siempre con el formato ErrorResponse; los
+            errores de validacion llevan el prefijo "titulo: " o
+            "descripcion: " seguido de un texto fijo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                tituloObligatorio:
+                  summary: Titulo ausente, vacio o solo espacios
+                  value:
+                    mensaje: "titulo: El título es obligatorio."
+                tituloCaracteresNoPermitidos:
+                  summary: "Titulo con caracteres fuera de la lista blanca (ej. <, &) o sin ninguna letra"
+                  value:
+                    mensaje: "titulo: El título contiene caracteres no permitidos. Usa solo letras, números y signos básicos como . , - ( )."
+                tituloCorto:
+                  summary: Titulo de menos de 5 caracteres (ya normalizado)
+                  value:
+                    mensaje: "titulo: Escribe un título de al menos 5 caracteres."
+                tituloLargo:
+                  summary: Titulo de mas de 80 caracteres (ya normalizado)
+                  value:
+                    mensaje: "titulo: El título es muy largo. Resúmelo en pocas palabras (máximo 80 caracteres) y deja los detalles en la descripción."
+                descripcionObligatoria:
+                  summary: Descripcion ausente, vacia o solo espacios
+                  value:
+                    mensaje: "descripcion: La descripción es obligatoria."
+                descripcionCorta:
+                  summary: Descripcion de menos de 10 caracteres tras recortar
+                  value:
+                    mensaje: "descripcion: La descripción debe tener al menos 10 caracteres. Cuéntanos un poco más sobre el problema."
+                prioridadObligatoria:
+                  summary: Prioridad ausente o null en el body
+                  value:
+                    mensaje: "prioridad: La prioridad es obligatoria"
+                prioridadInexistente:
+                  summary: Prioridad fuera del enum
+                  value:
+                    mensaje: "Valor invalido para 'prioridad': URGENTE"
+                jsonMalFormado:
+                  summary: JSON mal formado
+                  value:
+                    mensaje: "JSON mal formado en el cuerpo de la peticion"
+
+    get:
+      tags: [Tickets]
+      summary: Listar tickets, con filtros opcionales y paginacion
+      description: >
+        Devuelve un listado paginado de tickets (RF-02), pudiendo filtrar
+        opcionalmente por estado y/o prioridad. Agregado en la entrega Q10
+        de persistencia funcional para soportar listados que crecen con
+        el tiempo.
+      operationId: listarTickets
+      parameters:
+        - name: estado
+          in: query
+          required: false
+          description: Filtrar solo tickets en este estado
+          schema:
+            $ref: '#/components/schemas/Estado'
+        - name: prioridad
+          in: query
+          required: false
+          description: Filtrar solo tickets con esta prioridad
+          schema:
+            $ref: '#/components/schemas/Prioridad'
+        - name: page
+          in: query
+          required: false
+          description: Numero de pagina (empieza en 0)
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: size
+          in: query
+          required: false
+          description: Cantidad de resultados por pagina (sin maximo)
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+      responses:
+        '200':
+          description: Pagina de resultados, ordenada por fechaCreacion descendente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageResponseTicket'
+              example:
+                content:
+                  - id: "550e8400-e29b-41d4-a716-446655440000"
+                    titulo: "No enciende el computador"
+                    descripcion: "El equipo del area contable no enciende desde esta manana"
+                    prioridad: "ALTA"
+                    estado: "ABIERTO"
+                    tecnicoAsignado: "Carlos Perez"
+                    fechaCreacion: "2026-03-10T19:32:00.123456Z"
+                page: 0
+                size: 10
+                totalElements: 1
+                totalPages: 1
+                nextPage: false
+                previousPage: false
+        '400':
+          description: >
+            Parametro invalido: estado/prioridad fuera del enum, page menor
+            que 0, size menor que 1 o un valor no numerico.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                mensaje: "Valor invalido para 'estado': FOO"
+
+  /api/tickets/{id}:
+    get:
+      tags: [Tickets]
+      summary: Consultar el detalle de un ticket
+      description: Devuelve la informacion completa de un ticket especifico (RF-02).
+      operationId: obtenerTicket
+      parameters:
+        - $ref: '#/components/parameters/TicketId'
+      responses:
+        '200':
+          description: Ticket encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+        '400':
+          description: El id no es un UUID valido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                mensaje: "Valor invalido para 'id': abc"
+        '404':
+          description: No existe un ticket con ese id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                mensaje: "No se encontro el ticket con id 550e8400-e29b-41d4-a716-446655440000"
+
+  /api/tickets/{id}/estado:
+    patch:
+      tags: [Tickets]
+      summary: Actualizar el estado de un ticket
+      description: >
+        Cambia el estado del ticket siguiendo la unica transicion valida en
+        el MVP: abierto -> en_atencion -> cerrado (sin retrocesos, RF-03).
+      operationId: actualizarEstadoTicket
+      parameters:
+        - $ref: '#/components/parameters/TicketId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EstadoUpdateRequest'
+            example:
+              estado: "EN_ATENCION"
+      responses:
+        '200':
+          description: Estado actualizado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+        '400':
+          description: >
+            Transicion de estado no valida (ej. de CERRADO a ABIERTO), falta
+            el estado en el body, el estado no es un valor del enum, el JSON
+            esta mal formado o el id no es un UUID valido. Siempre con el
+            formato ErrorResponse.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                transicionInvalida:
+                  summary: Transicion no permitida (sin retrocesos ni saltos)
+                  value:
+                    mensaje: "No se puede cambiar el estado de CERRADO a ABIERTO"
+                estadoObligatorio:
+                  summary: Estado ausente o null en el body
+                  value:
+                    mensaje: "estado: El estado es obligatorio"
+                estadoInexistente:
+                  summary: Estado fuera del enum
+                  value:
+                    mensaje: "Valor invalido para 'estado': FOO"
+                idInvalido:
+                  summary: El id de la ruta no es un UUID valido
+                  value:
+                    mensaje: "Valor invalido para 'id': abc"
+        '404':
+          description: No existe un ticket con ese id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                mensaje: "No se encontro el ticket con id 550e8400-e29b-41d4-a716-446655440000"
+
+components:
+  parameters:
+    TicketId:
+      name: id
+      in: path
+      required: true
+      description: Identificador unico del ticket (UUID)
+      schema:
+        type: string
+        format: uuid
+        example: "550e8400-e29b-41d4-a716-446655440000"
+
+  schemas:
+    Prioridad:
+      type: string
+      enum: [BAJA, MEDIA, ALTA]
+
+    Estado:
+      type: string
+      description: >
+        Estados validos. Transiciones permitidas: ABIERTO -> EN_ATENCION,
+        EN_ATENCION -> CERRADO. No se permiten retrocesos en el MVP.
+      enum: [ABIERTO, EN_ATENCION, CERRADO]
+
+    TicketCreateRequest:
+      type: object
+      required: [titulo, descripcion, prioridad]
+      properties:
+        titulo:
+          type: string
+          minLength: 5
+          maxLength: 80
+          pattern: '^(?=.*[A-Za-zÁÉÍÓÚÜáéíóúüÑñ])[A-Za-zÁÉÍÓÚÜáéíóúüÑñ0-9 .,:;\-_()/#¿?¡!]+$'
+          description: >
+            Se normaliza antes de validar y de guardar: se recorta y los
+            espacios repetidos se reducen a uno; minLength/maxLength aplican
+            al valor normalizado. Lista blanca estricta: letras A-Z/a-z, con
+            tildes, Ü/ü y Ñ/ñ, digitos, espacio y los signos
+            . , : ; - _ ( ) / # ¿ ? ¡ !  Debe contener al menos una letra.
+            Cualquier otro caracter se rechaza (< > { } [ ] \ | ^ ~ ` $ % & * = + @ ' ",
+            caracteres de control, saltos de linea e invisibles).
+          example: "No enciende el computador"
+        descripcion:
+          type: string
+          minLength: 10
+          description: >
+            Obligatoria. Se recorta antes de validar y de guardar; minimo 10
+            caracteres sin contar espacios al inicio o al final. Sin maximo
+            ni restriccion de caracteres.
+          example: "El equipo del área contable no enciende desde esta mañana"
+        prioridad:
+          $ref: '#/components/schemas/Prioridad'
+
+    EstadoUpdateRequest:
+      type: object
+      required: [estado]
+      properties:
+        estado:
+          $ref: '#/components/schemas/Estado'
+
+    Ticket:
+      type: object
+      description: >
+        El servicio siempre devuelve los 7 campos; tecnicoAsignado puede
+        venir en null.
+      required: [id, titulo, descripcion, prioridad, estado, tecnicoAsignado, fechaCreacion]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Generado por ticket-service (no autoincremental)
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        titulo:
+          type: string
+          example: "No enciende el computador"
+        descripcion:
+          type: string
+          example: "El equipo del area contable no enciende desde esta manana"
+        prioridad:
+          $ref: '#/components/schemas/Prioridad'
+        estado:
+          $ref: '#/components/schemas/Estado'
+        tecnicoAsignado:
+          type: string
+          nullable: true
+          description: >
+            Se asigna automaticamente al crear el ticket (round-robin).
+            Solo es null en el caso extremo de no haber tecnicos
+            configurados.
+          example: "Carlos Perez"
+        fechaCreacion:
+          type: string
+          format: date-time
+          description: ISO-8601 en UTC (sufijo Z), con fraccion de segundo
+          example: "2026-03-10T19:32:00.123456Z"
+
+    PageResponseTicket:
+      type: object
+      description: Envoltorio de paginacion generico usado por el listado de tickets.
+      required: [content, page, size, totalElements, totalPages, nextPage, previousPage]
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Ticket'
+        page:
+          type: integer
+          description: Numero de pagina actual (empieza en 0)
+        size:
+          type: integer
+          description: Cantidad de resultados por pagina solicitada
+        totalElements:
+          type: integer
+          format: int64
+          description: Total de tickets que cumplen el filtro (todas las paginas)
+        totalPages:
+          type: integer
+          description: Cantidad total de paginas disponibles
+        nextPage:
+          type: boolean
+          description: true si existe una pagina siguiente (no es la ultima)
+        previousPage:
+          type: boolean
+          description: true si existe una pagina anterior (no es la primera)
+
+    ErrorResponse:
+      type: object
+      properties:
+        mensaje:
+          type: string
+          example: "No se encontro el ticket con id 550e8400-e29b-41d4-a716-446655440000"
+
+    TicketCreadoEvent:
+      type: object
+      description: >
+        NO es la respuesta de ningun endpoint REST: es el payload que
+        ticket-service publica en el topico Kafka "ticket-creado" cada vez
+        que POST /api/tickets crea un ticket. Se documenta aqui solo como
+        referencia, porque notification-service lo consume para generar
+        las notificaciones del sistema.
+      required: [eventoId, tipoEvento, fechaEvento, ticketId, titulo, prioridad, tecnicoAsignado]
+      properties:
+        eventoId:
+          type: string
+          format: uuid
+          description: Identificador propio del evento (distinto del id del ticket)
+        tipoEvento:
+          type: string
+          description: Siempre "TICKET_CREADO"
+          example: "TICKET_CREADO"
+        fechaEvento:
+          type: number
+          format: double
+          description: >
+            Instante de publicación del evento como epoch en segundos (con
+            parte decimal), UTC. NO es texto ISO-8601: el serializador JSON
+            de Kafka (JsonSerializer sobre OffsetDateTime) lo escribe como
+            numero. Distinto de fechaCreacion/fechaEnvio, que SI son
+            ISO-8601 porque los devuelve el API REST (Jackson con otro
+            modulo de serializacion).
+          example: 1794504997.106434817
+        ticketId:
+          type: string
+          format: uuid
+          description: Id del ticket creado (igual a Ticket.id)
+        titulo:
+          type: string
+        prioridad:
+          type: string
+          description: Valor del enum Prioridad, como texto
+          example: "ALTA"
+        tecnicoAsignado:
+          type: string
+          nullable: true
+          description: El tecnico ya asignado por round-robin (puede ser null)

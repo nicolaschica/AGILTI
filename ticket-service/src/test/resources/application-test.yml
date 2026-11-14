@@ -1,0 +1,13 @@
+# Perfil "test": usa H2 en memoria en vez de PostgreSQL, unicamente para
+# que ./gradlew test pueda correr sin necesitar Docker/Postgres levantado.
+# El perfil por defecto (application.yml) SIGUE usando PostgreSQL, tal
+# como especifica la arquitectura del proyecto.
+spring:
+  datasource:
+    url: jdbc:h2:mem:ticket_db;MODE=PostgreSQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: create-drop

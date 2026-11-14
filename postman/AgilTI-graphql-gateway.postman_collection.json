@@ -1,0 +1,1597 @@
+{
+  "info": {
+    "name": "AgilTI - graphql-gateway",
+    "description": "Queries y mutations GraphQL contra graphql-gateway (puerto 8082), la unica puerta de entrada del frontend. El gateway delega por REST en ticket-service (tickets: listar, detalle, crear, cambiar estado) y en notification-service (notificaciones). Ejecutala en orden (boton Run): la 1 crea un ticket y guarda {{ticketId}}; la 9 espera a que el consumidor Kafka genere su notificacion; la 12-14 recorren las transiciones de estado. Requiere todo el sistema levantado con docker compose up --build. Los errores llegan con HTTP 200 y errors[].extensions.code.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "gatewayUrl",
+      "value": "http://localhost:8082",
+      "type": "string"
+    },
+    {
+      "key": "ticketId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "ticketTitulo",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "GraphQL Gateway",
+      "item": [
+        {
+          "name": "1. crearTicket (mutation)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Titulo unico por ejecucion: permite reconocer la notificacion de este ticket",
+                  "pm.collectionVariables.set('ticketTitulo', 'Postman gateway ' + Date.now());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status es 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Sin errores GraphQL', function () {",
+                  "    pm.expect(pm.response.json().errors).to.be.undefined;",
+                  "});",
+                  "const t = pm.response.json().data.crearTicket;",
+                  "pm.test('Devuelve el Ticket creado con los 7 campos', function () {",
+                  "    pm.expect(t).to.have.all.keys('id', 'titulo', 'descripcion', 'prioridad', 'estado', 'tecnicoAsignado', 'fechaCreacion');",
+                  "    pm.expect(t.titulo).to.eql(pm.collectionVariables.get('ticketTitulo'));",
+                  "    pm.expect(t.prioridad).to.eql('ALTA');",
+                  "});",
+                  "pm.test('Nace ABIERTO y con tecnico asignado por ticket-service', function () {",
+                  "    pm.expect(t.estado).to.eql('ABIERTO');",
+                  "    pm.expect(t.tecnicoAsignado).to.be.a('string').and.not.empty;",
+                  "});",
+                  "pm.collectionVariables.set('ticketId', t.id);",
+                  "console.log('ticketId guardado:', t.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation($titulo: String!, $descripcion: String!, $prioridad: Prioridad!) { crearTicket(titulo: $titulo, descripcion: $descripcion, prioridad: $prioridad) { id titulo descripcion prioridad estado tecnicoAsignado fechaCreacion } }\",\n  \"variables\": {\n    \"titulo\": \"{{ticketTitulo}}\",\n    \"descripcion\": \"Creado desde Postman a traves del graphql-gateway\",\n    \"prioridad\": \"ALTA\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gatewayUrl}}/graphql",
+              "host": [
+                "{{gatewayUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          }
+        },
+        {
+          "name": "2. crearTicket con titulo vacio (BAD_REQUEST)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status es 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('errors[0].extensions.code es BAD_REQUEST', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.errors).to.be.an('array').that.is.not.empty;",
+                  "    pm.expect(body.errors[0].extensions.code).to.eql('BAD_REQUEST');",
+                  "    pm.expect(body.errors[0].message).to.be.a('string').and.not.include('Exception');",
+                  "    pm.expect(body.errors[0].message).to.eql(\"titulo: El título es obligatorio.\");",
+                  "});",
+                  "pm.test('data.crearTicket es null', function () {",
+                  "    const data = pm.response.json().data;",
+                  "    pm.expect(data === null || data === undefined || data.crearTicket === null).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation($titulo: String!, $descripcion: String!, $prioridad: Prioridad!) { crearTicket(titulo: $titulo, descripcion: $descripcion, prioridad: $prioridad) { id titulo descripcion prioridad estado tecnicoAsignado fechaCreacion } }\",\n  \"variables\": {\n    \"titulo\": \"\",\n    \"descripcion\": \"x\",\n    \"prioridad\": \"BAJA\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gatewayUrl}}/graphql",
+              "host": [
+                "{{gatewayUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          }
+        },
+        {
+          "name": "2.1 Titulo con \"<\" repetido (BAD_REQUEST)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Guarda cuantos tickets hay para comprobar luego que el rechazo no creo ninguno",
+                  "function contarTickets(cb) {",
+                  "    pm.sendRequest({ url: pm.variables.get('gatewayUrl') + '/graphql', method: 'POST',",
+                  "        header: { 'Content-Type': 'application/json' },",
+                  "        body: { mode: 'raw', raw: JSON.stringify({ query: '{ tickets(size: 1) { totalElements } }' }) }",
+                  "    }, function (err, res) { cb(err, err ? -1 : res.json().data.tickets.totalElements); });",
+                  "}",
+                  "contarTickets(function (err, total) { pm.variables.set('totalAntes', total); });"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status es 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('BAD_REQUEST con el mensaje exacto de ticket-service', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.errors).to.be.an('array').that.is.not.empty;",
+                  "    pm.expect(body.errors[0].extensions.code).to.eql('BAD_REQUEST');",
+                  "    pm.expect(body.errors[0].message).to.eql(\"titulo: El título contiene caracteres no permitidos. Usa solo letras, números y signos básicos como . , - ( ).\");",
+                  "});",
+                  "pm.test('data.crearTicket es null', function () {",
+                  "    const data = pm.response.json().data;",
+                  "    pm.expect(data === null || data === undefined || data.crearTicket === null).to.be.true;",
+                  "});",
+                  "function contarTickets(cb) {",
+                  "    pm.sendRequest({ url: pm.variables.get('gatewayUrl') + '/graphql', method: 'POST',",
+                  "        header: { 'Content-Type': 'application/json' },",
+                  "        body: { mode: 'raw', raw: JSON.stringify({ query: '{ tickets(size: 1) { totalElements } }' }) }",
+                  "    }, function (err, res) { cb(err, err ? -1 : res.json().data.tickets.totalElements); });",
+                  "}",
+                  "contarTickets(function (err, total) {",
+                  "    pm.test('No se creo ningun ticket', function () {",
+                  "        pm.expect(err).to.be.null;",
+                  "        pm.expect(total).to.eql(Number(pm.variables.get('totalAntes')));",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation($titulo: String!, $descripcion: String!, $prioridad: Prioridad!) { crearTicket(titulo: $titulo, descripcion: $descripcion, prioridad: $prioridad) { id titulo descripcion prioridad estado tecnicoAsignado fechaCreacion } }\",\n  \"variables\": {\n    \"titulo\": \"<<<<<<<<<<<<<<<<<<<<\",\n    \"descripcion\": \"El equipo no enciende desde esta mañana.\",\n    \"prioridad\": \"MEDIA\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gatewayUrl}}/graphql",
+              "host": [
+                "{{gatewayUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          }
+        },
+        {
+          "name": "2.2 Titulo con \"&\" (BAD_REQUEST)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Guarda cuantos tickets hay para comprobar luego que el rechazo no creo ninguno",
+                  "function contarTickets(cb) {",
+                  "    pm.sendRequest({ url: pm.variables.get('gatewayUrl') + '/graphql', method: 'POST',",
+                  "        header: { 'Content-Type': 'application/json' },",
+                  "        body: { mode: 'raw', raw: JSON.stringify({ query: '{ tickets(size: 1) { totalElements } }' }) }",
+                  "    }, function (err, res) { cb(err, err ? -1 : res.json().data.tickets.totalElements); });",
+                  "}",
+                  "contarTickets(function (err, total) { pm.variables.set('totalAntes', total); });"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status es 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('BAD_REQUEST con el mensaje exacto de ticket-service', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.errors).to.be.an('array').that.is.not.empty;",
+                  "    pm.expect(body.errors[0].extensions.code).to.eql('BAD_REQUEST');",
+                  "    pm.expect(body.errors[0].message).to.eql(\"titulo: El título contiene caracteres no permitidos. Usa solo letras, números y signos básicos como . , - ( ).\");",
+                  "});",
+                  "pm.test('data.crearTicket es null', function () {",
+                  "    const data = pm.response.json().data;",
+                  "    pm.expect(data === null || data === undefined || data.crearTicket === null).to.be.true;",
+                  "});",
+                  "function contarTickets(cb) {",
+                  "    pm.sendRequest({ url: pm.variables.get('gatewayUrl') + '/graphql', method: 'POST',",
+                  "        header: { 'Content-Type': 'application/json' },",
+                  "        body: { mode: 'raw', raw: JSON.stringify({ query: '{ tickets(size: 1) { totalElements } }' }) }",
+                  "    }, function (err, res) { cb(err, err ? -1 : res.json().data.tickets.totalElements); });",
+                  "}",
+                  "contarTickets(function (err, total) {",
+                  "    pm.test('No se creo ningun ticket', function () {",
+                  "        pm.expect(err).to.be.null;",
+                  "        pm.expect(total).to.eql(Number(pm.variables.get('totalAntes')));",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation($titulo: String!, $descripcion: String!, $prioridad: Prioridad!) { crearTicket(titulo: $titulo, descripcion: $descripcion, prioridad: $prioridad) { id titulo descripcion prioridad estado tecnicoAsignado fechaCreacion } }\",\n  \"variables\": {\n    \"titulo\": \"Red & internet caídas\",\n    \"descripcion\": \"El equipo no enciende desde esta mañana.\",\n    \"prioridad\": \"MEDIA\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gatewayUrl}}/graphql",
+              "host": [
+                "{{gatewayUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          }
+        },
+        {
+          "name": "2.3 Titulo de 81 caracteres (BAD_REQUEST)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Guarda cuantos tickets hay para comprobar luego que el rechazo no creo ninguno",
+                  "function contarTickets(cb) {",
+                  "    pm.sendRequest({ url: pm.variables.get('gatewayUrl') + '/graphql', method: 'POST',",
+                  "        header: { 'Content-Type': 'application/json' },",
+                  "        body: { mode: 'raw', raw: JSON.stringify({ query: '{ tickets(size: 1) { totalElements } }' }) }",
+                  "    }, function (err, res) { cb(err, err ? -1 : res.json().data.tickets.totalElements); });",
+                  "}",
+                  "contarTickets(function (err, total) { pm.variables.set('totalAntes', total); });"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status es 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('BAD_REQUEST con el mensaje exacto de ticket-service', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.errors).to.be.an('array').that.is.not.empty;",
+                  "    pm.expect(body.errors[0].extensions.code).to.eql('BAD_REQUEST');",
+                  "    pm.expect(body.errors[0].message).to.eql(\"titulo: El título es muy largo. Resúmelo en pocas palabras (máximo 80 caracteres) y deja los detalles en la descripción.\");",
+                  "});",
+                  "pm.test('data.crearTicket es null', function () {",
+                  "    const data = pm.response.json().data;",
+                  "    pm.expect(data === null || data === undefined || data.crearTicket === null).to.be.true;",
+                  "});",
+                  "function contarTickets(cb) {",
+                  "    pm.sendRequest({ url: pm.variables.get('gatewayUrl') + '/graphql', method: 'POST',",
+                  "        header: { 'Content-Type': 'application/json' },",
+                  "        body: { mode: 'raw', raw: JSON.stringify({ query: '{ tickets(size: 1) { totalElements } }' }) }",
+                  "    }, function (err, res) { cb(err, err ? -1 : res.json().data.tickets.totalElements); });",
+                  "}",
+                  "contarTickets(function (err, total) {",
+                  "    pm.test('No se creo ningun ticket', function () {",
+                  "        pm.expect(err).to.be.null;",
+                  "        pm.expect(total).to.eql(Number(pm.variables.get('totalAntes')));",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation($titulo: String!, $descripcion: String!, $prioridad: Prioridad!) { crearTicket(titulo: $titulo, descripcion: $descripcion, prioridad: $prioridad) { id titulo descripcion prioridad estado tecnicoAsignado fechaCreacion } }\",\n  \"variables\": {\n    \"titulo\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\n    \"descripcion\": \"El equipo no enciende desde esta mañana.\",\n    \"prioridad\": \"MEDIA\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gatewayUrl}}/graphql",
+              "host": [
+                "{{gatewayUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          }
+        },
+        {
+          "name": "2.4 Titulo de 4 caracteres (BAD_REQUEST)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Guarda cuantos tickets hay para comprobar luego que el rechazo no creo ninguno",
+                  "function contarTickets(cb) {",
+                  "    pm.sendRequest({ url: pm.variables.get('gatewayUrl') + '/graphql', method: 'POST',",
+                  "        header: { 'Content-Type': 'application/json' },",
+                  "        body: { mode: 'raw', raw: JSON.stringify({ query: '{ tickets(size: 1) { totalElements } }' }) }",
+                  "    }, function (err, res) { cb(err, err ? -1 : res.json().data.tickets.totalElements); });",
+                  "}",
+                  "contarTickets(function (err, total) { pm.variables.set('totalAntes', total); });"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status es 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('BAD_REQUEST con el mensaje exacto de ticket-service', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.errors).to.be.an('array').that.is.not.empty;",
+                  "    pm.expect(body.errors[0].extensions.code).to.eql('BAD_REQUEST');",
+                  "    pm.expect(body.errors[0].message).to.eql(\"titulo: Escribe un título de al menos 5 caracteres.\");",
+                  "});",
+                  "pm.test('data.crearTicket es null', function () {",
+                  "    const data = pm.response.json().data;",
+                  "    pm.expect(data === null || data === undefined || data.crearTicket === null).to.be.true;",
+                  "});",
+                  "function contarTickets(cb) {",
+                  "    pm.sendRequest({ url: pm.variables.get('gatewayUrl') + '/graphql', method: 'POST',",
+                  "        header: { 'Content-Type': 'application/json' },",
+                  "        body: { mode: 'raw', raw: JSON.stringify({ query: '{ tickets(size: 1) { totalElements } }' }) }",
+                  "    }, function (err, res) { cb(err, err ? -1 : res.json().data.tickets.totalElements); });",
+                  "}",
+                  "contarTickets(function (err, total) {",
+                  "    pm.test('No se creo ningun ticket', function () {",
+                  "        pm.expect(err).to.be.null;",
+                  "        pm.expect(total).to.eql(Number(pm.variables.get('totalAntes')));",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation($titulo: String!, $descripcion: String!, $prioridad: Prioridad!) { crearTicket(titulo: $titulo, descripcion: $descripcion, prioridad: $prioridad) { id titulo descripcion prioridad estado tecnicoAsignado fechaCreacion } }\",\n  \"variables\": {\n    \"titulo\": \"Wifi\",\n    \"descripcion\": \"El equipo no enciende desde esta mañana.\",\n    \"prioridad\": \"MEDIA\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gatewayUrl}}/graphql",
+              "host": [
+                "{{gatewayUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          }
+        },
+        {
+          "name": "2.5 Titulo vacio (BAD_REQUEST)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Guarda cuantos tickets hay para comprobar luego que el rechazo no creo ninguno",
+                  "function contarTickets(cb) {",
+                  "    pm.sendRequest({ url: pm.variables.get('gatewayUrl') + '/graphql', method: 'POST',",
+                  "        header: { 'Content-Type': 'application/json' },",
+                  "        body: { mode: 'raw', raw: JSON.stringify({ query: '{ tickets(size: 1) { totalElements } }' }) }",
+                  "    }, function (err, res) { cb(err, err ? -1 : res.json().data.tickets.totalElements); });",
+                  "}",
+                  "contarTickets(function (err, total) { pm.variables.set('totalAntes', total); });"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status es 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('BAD_REQUEST con el mensaje exacto de ticket-service', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.errors).to.be.an('array').that.is.not.empty;",
+                  "    pm.expect(body.errors[0].extensions.code).to.eql('BAD_REQUEST');",
+                  "    pm.expect(body.errors[0].message).to.eql(\"titulo: El título es obligatorio.\");",
+                  "});",
+                  "pm.test('data.crearTicket es null', function () {",
+                  "    const data = pm.response.json().data;",
+                  "    pm.expect(data === null || data === undefined || data.crearTicket === null).to.be.true;",
+                  "});",
+                  "function contarTickets(cb) {",
+                  "    pm.sendRequest({ url: pm.variables.get('gatewayUrl') + '/graphql', method: 'POST',",
+                  "        header: { 'Content-Type': 'application/json' },",
+                  "        body: { mode: 'raw', raw: JSON.stringify({ query: '{ tickets(size: 1) { totalElements } }' }) }",
+                  "    }, function (err, res) { cb(err, err ? -1 : res.json().data.tickets.totalElements); });",
+                  "}",
+                  "contarTickets(function (err, total) {",
+                  "    pm.test('No se creo ningun ticket', function () {",
+                  "        pm.expect(err).to.be.null;",
+                  "        pm.expect(total).to.eql(Number(pm.variables.get('totalAntes')));",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation($titulo: String!, $descripcion: String!, $prioridad: Prioridad!) { crearTicket(titulo: $titulo, descripcion: $descripcion, prioridad: $prioridad) { id titulo descripcion prioridad estado tecnicoAsignado fechaCreacion } }\",\n  \"variables\": {\n    \"titulo\": \"\",\n    \"descripcion\": \"El equipo no enciende desde esta mañana.\",\n    \"prioridad\": \"MEDIA\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gatewayUrl}}/graphql",
+              "host": [
+                "{{gatewayUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          }
+        },
+        {
+          "name": "2.6 Titulo solo numeros (BAD_REQUEST)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Guarda cuantos tickets hay para comprobar luego que el rechazo no creo ninguno",
+                  "function contarTickets(cb) {",
+                  "    pm.sendRequest({ url: pm.variables.get('gatewayUrl') + '/graphql', method: 'POST',",
+                  "        header: { 'Content-Type': 'application/json' },",
+                  "        body: { mode: 'raw', raw: JSON.stringify({ query: '{ tickets(size: 1) { totalElements } }' }) }",
+                  "    }, function (err, res) { cb(err, err ? -1 : res.json().data.tickets.totalElements); });",
+                  "}",
+                  "contarTickets(function (err, total) { pm.variables.set('totalAntes', total); });"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status es 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('BAD_REQUEST con el mensaje exacto de ticket-service', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.errors).to.be.an('array').that.is.not.empty;",
+                  "    pm.expect(body.errors[0].extensions.code).to.eql('BAD_REQUEST');",
+                  "    pm.expect(body.errors[0].message).to.eql(\"titulo: El título contiene caracteres no permitidos. Usa solo letras, números y signos básicos como . , - ( ).\");",
+                  "});",
+                  "pm.test('data.crearTicket es null', function () {",
+                  "    const data = pm.response.json().data;",
+                  "    pm.expect(data === null || data === undefined || data.crearTicket === null).to.be.true;",
+                  "});",
+                  "function contarTickets(cb) {",
+                  "    pm.sendRequest({ url: pm.variables.get('gatewayUrl') + '/graphql', method: 'POST',",
+                  "        header: { 'Content-Type': 'application/json' },",
+                  "        body: { mode: 'raw', raw: JSON.stringify({ query: '{ tickets(size: 1) { totalElements } }' }) }",
+                  "    }, function (err, res) { cb(err, err ? -1 : res.json().data.tickets.totalElements); });",
+                  "}",
+                  "contarTickets(function (err, total) {",
+                  "    pm.test('No se creo ningun ticket', function () {",
+                  "        pm.expect(err).to.be.null;",
+                  "        pm.expect(total).to.eql(Number(pm.variables.get('totalAntes')));",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation($titulo: String!, $descripcion: String!, $prioridad: Prioridad!) { crearTicket(titulo: $titulo, descripcion: $descripcion, prioridad: $prioridad) { id titulo descripcion prioridad estado tecnicoAsignado fechaCreacion } }\",\n  \"variables\": {\n    \"titulo\": \"1234567\",\n    \"descripcion\": \"El equipo no enciende desde esta mañana.\",\n    \"prioridad\": \"MEDIA\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gatewayUrl}}/graphql",
+              "host": [
+                "{{gatewayUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          }
+        },
+        {
+          "name": "2.7 Titulo solo simbolos (BAD_REQUEST)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Guarda cuantos tickets hay para comprobar luego que el rechazo no creo ninguno",
+                  "function contarTickets(cb) {",
+                  "    pm.sendRequest({ url: pm.variables.get('gatewayUrl') + '/graphql', method: 'POST',",
+                  "        header: { 'Content-Type': 'application/json' },",
+                  "        body: { mode: 'raw', raw: JSON.stringify({ query: '{ tickets(size: 1) { totalElements } }' }) }",
+                  "    }, function (err, res) { cb(err, err ? -1 : res.json().data.tickets.totalElements); });",
+                  "}",
+                  "contarTickets(function (err, total) { pm.variables.set('totalAntes', total); });"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status es 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('BAD_REQUEST con el mensaje exacto de ticket-service', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.errors).to.be.an('array').that.is.not.empty;",
+                  "    pm.expect(body.errors[0].extensions.code).to.eql('BAD_REQUEST');",
+                  "    pm.expect(body.errors[0].message).to.eql(\"titulo: El título contiene caracteres no permitidos. Usa solo letras, números y signos básicos como . , - ( ).\");",
+                  "});",
+                  "pm.test('data.crearTicket es null', function () {",
+                  "    const data = pm.response.json().data;",
+                  "    pm.expect(data === null || data === undefined || data.crearTicket === null).to.be.true;",
+                  "});",
+                  "function contarTickets(cb) {",
+                  "    pm.sendRequest({ url: pm.variables.get('gatewayUrl') + '/graphql', method: 'POST',",
+                  "        header: { 'Content-Type': 'application/json' },",
+                  "        body: { mode: 'raw', raw: JSON.stringify({ query: '{ tickets(size: 1) { totalElements } }' }) }",
+                  "    }, function (err, res) { cb(err, err ? -1 : res.json().data.tickets.totalElements); });",
+                  "}",
+                  "contarTickets(function (err, total) {",
+                  "    pm.test('No se creo ningun ticket', function () {",
+                  "        pm.expect(err).to.be.null;",
+                  "        pm.expect(total).to.eql(Number(pm.variables.get('totalAntes')));",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation($titulo: String!, $descripcion: String!, $prioridad: Prioridad!) { crearTicket(titulo: $titulo, descripcion: $descripcion, prioridad: $prioridad) { id titulo descripcion prioridad estado tecnicoAsignado fechaCreacion } }\",\n  \"variables\": {\n    \"titulo\": \"¿¡-_/#!?\",\n    \"descripcion\": \"El equipo no enciende desde esta mañana.\",\n    \"prioridad\": \"MEDIA\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gatewayUrl}}/graphql",
+              "host": [
+                "{{gatewayUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          }
+        },
+        {
+          "name": "2.8 Descripcion de 9 caracteres (BAD_REQUEST)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Guarda cuantos tickets hay para comprobar luego que el rechazo no creo ninguno",
+                  "function contarTickets(cb) {",
+                  "    pm.sendRequest({ url: pm.variables.get('gatewayUrl') + '/graphql', method: 'POST',",
+                  "        header: { 'Content-Type': 'application/json' },",
+                  "        body: { mode: 'raw', raw: JSON.stringify({ query: '{ tickets(size: 1) { totalElements } }' }) }",
+                  "    }, function (err, res) { cb(err, err ? -1 : res.json().data.tickets.totalElements); });",
+                  "}",
+                  "contarTickets(function (err, total) { pm.variables.set('totalAntes', total); });"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status es 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('BAD_REQUEST con el mensaje exacto de ticket-service', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.errors).to.be.an('array').that.is.not.empty;",
+                  "    pm.expect(body.errors[0].extensions.code).to.eql('BAD_REQUEST');",
+                  "    pm.expect(body.errors[0].message).to.eql(\"descripcion: La descripción debe tener al menos 10 caracteres. Cuéntanos un poco más sobre el problema.\");",
+                  "});",
+                  "pm.test('data.crearTicket es null', function () {",
+                  "    const data = pm.response.json().data;",
+                  "    pm.expect(data === null || data === undefined || data.crearTicket === null).to.be.true;",
+                  "});",
+                  "function contarTickets(cb) {",
+                  "    pm.sendRequest({ url: pm.variables.get('gatewayUrl') + '/graphql', method: 'POST',",
+                  "        header: { 'Content-Type': 'application/json' },",
+                  "        body: { mode: 'raw', raw: JSON.stringify({ query: '{ tickets(size: 1) { totalElements } }' }) }",
+                  "    }, function (err, res) { cb(err, err ? -1 : res.json().data.tickets.totalElements); });",
+                  "}",
+                  "contarTickets(function (err, total) {",
+                  "    pm.test('No se creo ningun ticket', function () {",
+                  "        pm.expect(err).to.be.null;",
+                  "        pm.expect(total).to.eql(Number(pm.variables.get('totalAntes')));",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation($titulo: String!, $descripcion: String!, $prioridad: Prioridad!) { crearTicket(titulo: $titulo, descripcion: $descripcion, prioridad: $prioridad) { id titulo descripcion prioridad estado tecnicoAsignado fechaCreacion } }\",\n  \"variables\": {\n    \"titulo\": \"Equipo sin red\",\n    \"descripcion\": \"123456789\",\n    \"prioridad\": \"MEDIA\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gatewayUrl}}/graphql",
+              "host": [
+                "{{gatewayUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          }
+        },
+        {
+          "name": "2.9 Descripcion \"a\" (BAD_REQUEST)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Guarda cuantos tickets hay para comprobar luego que el rechazo no creo ninguno",
+                  "function contarTickets(cb) {",
+                  "    pm.sendRequest({ url: pm.variables.get('gatewayUrl') + '/graphql', method: 'POST',",
+                  "        header: { 'Content-Type': 'application/json' },",
+                  "        body: { mode: 'raw', raw: JSON.stringify({ query: '{ tickets(size: 1) { totalElements } }' }) }",
+                  "    }, function (err, res) { cb(err, err ? -1 : res.json().data.tickets.totalElements); });",
+                  "}",
+                  "contarTickets(function (err, total) { pm.variables.set('totalAntes', total); });"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status es 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('BAD_REQUEST con el mensaje exacto de ticket-service', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.errors).to.be.an('array').that.is.not.empty;",
+                  "    pm.expect(body.errors[0].extensions.code).to.eql('BAD_REQUEST');",
+                  "    pm.expect(body.errors[0].message).to.eql(\"descripcion: La descripción debe tener al menos 10 caracteres. Cuéntanos un poco más sobre el problema.\");",
+                  "});",
+                  "pm.test('data.crearTicket es null', function () {",
+                  "    const data = pm.response.json().data;",
+                  "    pm.expect(data === null || data === undefined || data.crearTicket === null).to.be.true;",
+                  "});",
+                  "function contarTickets(cb) {",
+                  "    pm.sendRequest({ url: pm.variables.get('gatewayUrl') + '/graphql', method: 'POST',",
+                  "        header: { 'Content-Type': 'application/json' },",
+                  "        body: { mode: 'raw', raw: JSON.stringify({ query: '{ tickets(size: 1) { totalElements } }' }) }",
+                  "    }, function (err, res) { cb(err, err ? -1 : res.json().data.tickets.totalElements); });",
+                  "}",
+                  "contarTickets(function (err, total) {",
+                  "    pm.test('No se creo ningun ticket', function () {",
+                  "        pm.expect(err).to.be.null;",
+                  "        pm.expect(total).to.eql(Number(pm.variables.get('totalAntes')));",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation($titulo: String!, $descripcion: String!, $prioridad: Prioridad!) { crearTicket(titulo: $titulo, descripcion: $descripcion, prioridad: $prioridad) { id titulo descripcion prioridad estado tecnicoAsignado fechaCreacion } }\",\n  \"variables\": {\n    \"titulo\": \"Equipo sin red\",\n    \"descripcion\": \"a\",\n    \"prioridad\": \"MEDIA\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gatewayUrl}}/graphql",
+              "host": [
+                "{{gatewayUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          }
+        },
+        {
+          "name": "2.10 Titulo con tildes y ñ (OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status es 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Sin errores y titulo guardado tal cual', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.errors).to.be.undefined;",
+                  "    pm.expect(body.data.crearTicket.titulo).to.eql(\"Configuración del cañón y pingüino\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation($titulo: String!, $descripcion: String!, $prioridad: Prioridad!) { crearTicket(titulo: $titulo, descripcion: $descripcion, prioridad: $prioridad) { id titulo descripcion prioridad estado tecnicoAsignado fechaCreacion } }\",\n  \"variables\": {\n    \"titulo\": \"Configuración del cañón y pingüino\",\n    \"descripcion\": \"El equipo no enciende desde esta mañana.\",\n    \"prioridad\": \"MEDIA\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gatewayUrl}}/graphql",
+              "host": [
+                "{{gatewayUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          }
+        },
+        {
+          "name": "2.11 Titulo con todos los signos permitidos (OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status es 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Sin errores y titulo guardado tal cual', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.errors).to.be.undefined;",
+                  "    pm.expect(body.data.crearTicket.titulo).to.eql(\"¿Error #12? ¡Sí!: red, piso 3; (VPN) A-B_C/D.\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation($titulo: String!, $descripcion: String!, $prioridad: Prioridad!) { crearTicket(titulo: $titulo, descripcion: $descripcion, prioridad: $prioridad) { id titulo descripcion prioridad estado tecnicoAsignado fechaCreacion } }\",\n  \"variables\": {\n    \"titulo\": \"¿Error #12? ¡Sí!: red, piso 3; (VPN) A-B_C/D.\",\n    \"descripcion\": \"El equipo no enciende desde esta mañana.\",\n    \"prioridad\": \"MEDIA\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gatewayUrl}}/graphql",
+              "host": [
+                "{{gatewayUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          }
+        },
+        {
+          "name": "2.12 Descripcion de 10 caracteres (OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status es 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Sin errores y titulo guardado tal cual', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.errors).to.be.undefined;",
+                  "    pm.expect(body.data.crearTicket.titulo).to.eql(\"Equipo sin red\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation($titulo: String!, $descripcion: String!, $prioridad: Prioridad!) { crearTicket(titulo: $titulo, descripcion: $descripcion, prioridad: $prioridad) { id titulo descripcion prioridad estado tecnicoAsignado fechaCreacion } }\",\n  \"variables\": {\n    \"titulo\": \"Equipo sin red\",\n    \"descripcion\": \"1234567890\",\n    \"prioridad\": \"MEDIA\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gatewayUrl}}/graphql",
+              "host": [
+                "{{gatewayUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          }
+        },
+        {
+          "name": "3. Listar tickets (primera pagina)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status es 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Sin errores GraphQL', function () {",
+                  "    pm.expect(pm.response.json().errors).to.be.undefined;",
+                  "});",
+                  "const p = pm.response.json().data.tickets;",
+                  "pm.test('Estructura TicketPage', function () {",
+                  "    pm.expect(p).to.have.all.keys('content', 'page', 'size', 'totalElements', 'totalPages', 'nextPage', 'previousPage');",
+                  "    pm.expect(p.content).to.be.an('array');",
+                  "});",
+                  "pm.test('Valores por defecto page=0, size=10', function () {",
+                  "    pm.expect(p.page).to.eql(0);",
+                  "    pm.expect(p.size).to.eql(10);",
+                  "});",
+                  "pm.test('El ticket recien creado aparece (mas reciente primero)', function () {",
+                  "    pm.expect(p.content.map(t => t.id)).to.include(pm.collectionVariables.get('ticketId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"{ tickets { content { id titulo descripcion prioridad estado tecnicoAsignado fechaCreacion } page size totalElements totalPages nextPage previousPage } }\"\n}"
+            },
+            "url": {
+              "raw": "{{gatewayUrl}}/graphql",
+              "host": [
+                "{{gatewayUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          }
+        },
+        {
+          "name": "4. Filtrar por estado y prioridad",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status es 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Sin errores GraphQL', function () {",
+                  "    pm.expect(pm.response.json().errors).to.be.undefined;",
+                  "});",
+                  "pm.test('Todos los tickets son ABIERTO y ALTA', function () {",
+                  "    pm.response.json().data.tickets.content.forEach(function (t) {",
+                  "        pm.expect(t.estado).to.eql('ABIERTO');",
+                  "        pm.expect(t.prioridad).to.eql('ALTA');",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query($estado: Estado, $prioridad: Prioridad) { tickets(estado: $estado, prioridad: $prioridad) { content { id titulo descripcion prioridad estado tecnicoAsignado fechaCreacion } page size totalElements totalPages nextPage previousPage } }\",\n  \"variables\": {\n    \"estado\": \"ABIERTO\",\n    \"prioridad\": \"ALTA\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gatewayUrl}}/graphql",
+              "host": [
+                "{{gatewayUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          }
+        },
+        {
+          "name": "5. Paginar (page=1, size=2)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status es 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Sin errores GraphQL', function () {",
+                  "    pm.expect(pm.response.json().errors).to.be.undefined;",
+                  "});",
+                  "pm.test('Pagina 1 de tamano 2, con pagina anterior', function () {",
+                  "    const p = pm.response.json().data.tickets;",
+                  "    pm.expect(p.page).to.eql(1);",
+                  "    pm.expect(p.size).to.eql(2);",
+                  "    pm.expect(p.content.length).to.be.at.most(2);",
+                  "    pm.expect(p.previousPage).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"{ tickets(page: 1, size: 2) { content { id titulo descripcion prioridad estado tecnicoAsignado fechaCreacion } page size totalElements totalPages nextPage previousPage } }\"\n}"
+            },
+            "url": {
+              "raw": "{{gatewayUrl}}/graphql",
+              "host": [
+                "{{gatewayUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          }
+        },
+        {
+          "name": "6. Ticket por id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status es 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Sin errores GraphQL', function () {",
+                  "    pm.expect(pm.response.json().errors).to.be.undefined;",
+                  "});",
+                  "pm.test('Devuelve el ticket solicitado', function () {",
+                  "    const t = pm.response.json().data.ticket;",
+                  "    pm.expect(t.id).to.eql(pm.collectionVariables.get('ticketId'));",
+                  "    pm.expect(t).to.have.all.keys('id', 'titulo', 'descripcion', 'prioridad', 'estado', 'tecnicoAsignado', 'fechaCreacion');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query($id: ID!) { ticket(id: $id) { id titulo descripcion prioridad estado tecnicoAsignado fechaCreacion } }\",\n  \"variables\": {\n    \"id\": \"{{ticketId}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gatewayUrl}}/graphql",
+              "host": [
+                "{{gatewayUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          }
+        },
+        {
+          "name": "7. Ticket inexistente (NOT_FOUND)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status es 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('errors[0].extensions.code es NOT_FOUND', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.errors).to.be.an('array').that.is.not.empty;",
+                  "    pm.expect(body.errors[0].extensions.code).to.eql('NOT_FOUND');",
+                  "    pm.expect(body.errors[0].message).to.be.a('string').and.not.include('Exception');",
+                  "});",
+                  "pm.test('data.ticket es null', function () {",
+                  "    const data = pm.response.json().data;",
+                  "    pm.expect(data === null || data === undefined || data.ticket === null).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query($id: ID!) { ticket(id: $id) { id titulo } }\",\n  \"variables\": {\n    \"id\": \"00000000-0000-0000-0000-000000000000\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gatewayUrl}}/graphql",
+              "host": [
+                "{{gatewayUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          }
+        },
+        {
+          "name": "8. Ticket con id que no es UUID (BAD_REQUEST)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status es 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('errors[0].extensions.code es BAD_REQUEST', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.errors).to.be.an('array').that.is.not.empty;",
+                  "    pm.expect(body.errors[0].extensions.code).to.eql('BAD_REQUEST');",
+                  "    pm.expect(body.errors[0].message).to.be.a('string').and.not.include('Exception');",
+                  "});",
+                  "pm.test('data.ticket es null', function () {",
+                  "    const data = pm.response.json().data;",
+                  "    pm.expect(data === null || data === undefined || data.ticket === null).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query($id: ID!) { ticket(id: $id) { id titulo } }\",\n  \"variables\": {\n    \"id\": \"abc\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gatewayUrl}}/graphql",
+              "host": [
+                "{{gatewayUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          }
+        },
+        {
+          "name": "9. notificacionesPorTicket del ticket creado (espera al consumidor Kafka)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// notification-service crea la notificacion de forma asincrona al consumir",
+                  "// el evento Kafka ticket-creado: se consulta (tambien por el gateway) hasta",
+                  "// que aparezca, max. 15 intentos con 1 s entre cada uno.",
+                  "const MAX_INTENTOS = 15;",
+                  "const ESPERA_MS = 1000;",
+                  "function consultar(intento) {",
+                  "    pm.sendRequest({",
+                  "        url: pm.variables.get('gatewayUrl') + '/graphql',",
+                  "        method: 'POST',",
+                  "        header: { 'Content-Type': 'application/json' },",
+                  "        body: { mode: 'raw', raw: JSON.stringify({",
+                  "            query: 'query($t: ID!) { notificacionesPorTicket(ticketId: $t) { id } }',",
+                  "            variables: { t: pm.collectionVariables.get('ticketId') }",
+                  "        }) }",
+                  "    }, function (err, res) {",
+                  "        const data = !err && res.code === 200 ? res.json().data : null;",
+                  "        const lista = data && data.notificacionesPorTicket ? data.notificacionesPorTicket : [];",
+                  "        if (lista.length > 0 || intento >= MAX_INTENTOS) {",
+                  "            console.log('Notificacion encontrada en el intento ' + intento);",
+                  "            return;",
+                  "        }",
+                  "        setTimeout(function () { consultar(intento + 1); }, ESPERA_MS);",
+                  "    });",
+                  "}",
+                  "consultar(1);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status es 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Sin errores GraphQL', function () {",
+                  "    pm.expect(pm.response.json().errors).to.be.undefined;",
+                  "});",
+                  "const lista = pm.response.json().data.notificacionesPorTicket;",
+                  "pm.test('Hay al menos una notificacion, todas de este ticket', function () {",
+                  "    pm.expect(lista).to.be.an('array').that.is.not.empty;",
+                  "    lista.forEach(function (n) {",
+                  "        pm.expect(n.ticketId).to.eql(pm.collectionVariables.get('ticketId'));",
+                  "        pm.expect(n).to.have.all.keys('id', 'ticketId', 'mensaje', 'fechaEnvio');",
+                  "    });",
+                  "});",
+                  "pm.test('La notificacion menciona el titulo del ticket', function () {",
+                  "    pm.expect(lista[0].mensaje).to.include(pm.collectionVariables.get('ticketTitulo'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query($ticketId: ID!) { notificacionesPorTicket(ticketId: $ticketId) { id ticketId mensaje fechaEnvio } }\",\n  \"variables\": {\n    \"ticketId\": \"{{ticketId}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gatewayUrl}}/graphql",
+              "host": [
+                "{{gatewayUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          }
+        },
+        {
+          "name": "10. Listar notificaciones (paginado)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status es 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Sin errores GraphQL', function () {",
+                  "    pm.expect(pm.response.json().errors).to.be.undefined;",
+                  "});",
+                  "const p = pm.response.json().data.notificaciones;",
+                  "pm.test('Estructura NotificacionPage con page=0 y size=5', function () {",
+                  "    pm.expect(p).to.have.all.keys('content', 'page', 'size', 'totalElements', 'totalPages', 'nextPage', 'previousPage');",
+                  "    pm.expect(p.page).to.eql(0);",
+                  "    pm.expect(p.size).to.eql(5);",
+                  "    pm.expect(p.content.length).to.be.at.most(5);",
+                  "});",
+                  "pm.test('Vienen de la mas reciente a la mas antigua', function () {",
+                  "    for (let i = 1; i < p.content.length; i++) {",
+                  "        pm.expect(new Date(p.content[i - 1].fechaEnvio).getTime())",
+                  "            .to.be.at.least(new Date(p.content[i].fechaEnvio).getTime());",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query($page: Int, $size: Int) { notificaciones(page: $page, size: $size) { content { id ticketId mensaje fechaEnvio } page size totalElements totalPages nextPage previousPage } }\",\n  \"variables\": {\n    \"page\": 0,\n    \"size\": 5\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gatewayUrl}}/graphql",
+              "host": [
+                "{{gatewayUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          }
+        },
+        {
+          "name": "11. notificacionesPorTicket con id que no es UUID (BAD_REQUEST)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status es 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('errors[0].extensions.code es BAD_REQUEST', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.errors).to.be.an('array').that.is.not.empty;",
+                  "    pm.expect(body.errors[0].extensions.code).to.eql('BAD_REQUEST');",
+                  "    pm.expect(body.errors[0].message).to.be.a('string').and.not.include('Exception');",
+                  "});",
+                  "pm.test('data.notificacionesPorTicket es null', function () {",
+                  "    const data = pm.response.json().data;",
+                  "    pm.expect(data === null || data === undefined || data.notificacionesPorTicket === null).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query($ticketId: ID!) { notificacionesPorTicket(ticketId: $ticketId) { id ticketId mensaje fechaEnvio } }\",\n  \"variables\": {\n    \"ticketId\": \"abc\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gatewayUrl}}/graphql",
+              "host": [
+                "{{gatewayUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          }
+        },
+        {
+          "name": "12. actualizarEstadoTicket ABIERTO -> EN_ATENCION",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status es 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Sin errores GraphQL', function () {",
+                  "    pm.expect(pm.response.json().errors).to.be.undefined;",
+                  "});",
+                  "pm.test('El ticket queda en EN_ATENCION', function () {",
+                  "    const t = pm.response.json().data.actualizarEstadoTicket;",
+                  "    pm.expect(t.id).to.eql(pm.collectionVariables.get('ticketId'));",
+                  "    pm.expect(t.estado).to.eql('EN_ATENCION');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation($id: ID!, $estado: Estado!) { actualizarEstadoTicket(id: $id, estado: $estado) { id titulo descripcion prioridad estado tecnicoAsignado fechaCreacion } }\",\n  \"variables\": {\n    \"id\": \"{{ticketId}}\",\n    \"estado\": \"EN_ATENCION\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gatewayUrl}}/graphql",
+              "host": [
+                "{{gatewayUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          }
+        },
+        {
+          "name": "13. actualizarEstadoTicket EN_ATENCION -> CERRADO",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status es 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Sin errores GraphQL', function () {",
+                  "    pm.expect(pm.response.json().errors).to.be.undefined;",
+                  "});",
+                  "pm.test('El ticket queda en CERRADO', function () {",
+                  "    const t = pm.response.json().data.actualizarEstadoTicket;",
+                  "    pm.expect(t.id).to.eql(pm.collectionVariables.get('ticketId'));",
+                  "    pm.expect(t.estado).to.eql('CERRADO');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation($id: ID!, $estado: Estado!) { actualizarEstadoTicket(id: $id, estado: $estado) { id titulo descripcion prioridad estado tecnicoAsignado fechaCreacion } }\",\n  \"variables\": {\n    \"id\": \"{{ticketId}}\",\n    \"estado\": \"CERRADO\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gatewayUrl}}/graphql",
+              "host": [
+                "{{gatewayUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          }
+        },
+        {
+          "name": "14. Transicion invalida CERRADO -> ABIERTO (BAD_REQUEST)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status es 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('errors[0].extensions.code es BAD_REQUEST', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.errors).to.be.an('array').that.is.not.empty;",
+                  "    pm.expect(body.errors[0].extensions.code).to.eql('BAD_REQUEST');",
+                  "    pm.expect(body.errors[0].message).to.be.a('string').and.not.include('Exception');",
+                  "});",
+                  "pm.test('data.actualizarEstadoTicket es null', function () {",
+                  "    const data = pm.response.json().data;",
+                  "    pm.expect(data === null || data === undefined || data.actualizarEstadoTicket === null).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation($id: ID!, $estado: Estado!) { actualizarEstadoTicket(id: $id, estado: $estado) { id titulo descripcion prioridad estado tecnicoAsignado fechaCreacion } }\",\n  \"variables\": {\n    \"id\": \"{{ticketId}}\",\n    \"estado\": \"ABIERTO\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gatewayUrl}}/graphql",
+              "host": [
+                "{{gatewayUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          }
+        },
+        {
+          "name": "15. actualizarEstadoTicket de ticket inexistente (NOT_FOUND)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status es 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('errors[0].extensions.code es NOT_FOUND', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.errors).to.be.an('array').that.is.not.empty;",
+                  "    pm.expect(body.errors[0].extensions.code).to.eql('NOT_FOUND');",
+                  "    pm.expect(body.errors[0].message).to.be.a('string').and.not.include('Exception');",
+                  "});",
+                  "pm.test('data.actualizarEstadoTicket es null', function () {",
+                  "    const data = pm.response.json().data;",
+                  "    pm.expect(data === null || data === undefined || data.actualizarEstadoTicket === null).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation($id: ID!, $estado: Estado!) { actualizarEstadoTicket(id: $id, estado: $estado) { id titulo descripcion prioridad estado tecnicoAsignado fechaCreacion } }\",\n  \"variables\": {\n    \"id\": \"00000000-0000-0000-0000-000000000000\",\n    \"estado\": \"EN_ATENCION\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gatewayUrl}}/graphql",
+              "host": [
+                "{{gatewayUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
